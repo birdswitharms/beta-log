@@ -8,6 +8,8 @@ interface TimerConfig {
   workTime: number;
   repRest: number;
   setRest: number;
+  weightLbs: number | null;
+  edgeMm: number | null;
 }
 
 interface TimerState {
@@ -105,6 +107,8 @@ const defaultConfig: TimerConfig = {
   workTime: 7,
   repRest: 3,
   setRest: 60,
+  weightLbs: null,
+  edgeMm: null,
 };
 
 export const useTimerStore = create<TimerState>((set, get) => ({

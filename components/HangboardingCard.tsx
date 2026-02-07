@@ -40,6 +40,17 @@ export default function HangboardingCard({ hangboarding, onDelete }: Props) {
         {hangboarding.sets}s x {hangboarding.reps}r | {hangboarding.work_time}s work | {hangboarding.rep_rest}s rep rest | {hangboarding.set_rest}s set rest
       </Text>
 
+      {(hangboarding.weight_lbs !== null || hangboarding.edge_mm !== null) && (
+        <Text style={styles.extras}>
+          {[
+            hangboarding.weight_lbs !== null ? `${hangboarding.weight_lbs} lbs` : null,
+            hangboarding.edge_mm !== null ? `${hangboarding.edge_mm}mm edge` : null,
+          ]
+            .filter(Boolean)
+            .join(" | ")}
+        </Text>
+      )}
+
       <View style={styles.footer}>
         <Text style={styles.duration}>{formatDuration(hangboarding.duration_seconds)}</Text>
         <Text style={styles.date}>{formattedDate}</Text>
@@ -73,6 +84,12 @@ const styles = StyleSheet.create({
     color: "#AEAEB2",
     fontSize: 13,
     marginTop: 6,
+  },
+  extras: {
+    color: "#FF6B35",
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 4,
   },
   footer: {
     flexDirection: "row",

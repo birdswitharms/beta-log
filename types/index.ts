@@ -18,6 +18,8 @@ export interface TimerPreset {
   work_time: number;
   rep_rest: number;
   set_rest: number;
+  weight_lbs: number | null;
+  edge_mm: number | null;
   created_at: string;
 }
 
@@ -31,6 +33,8 @@ export interface Hangboarding {
   work_time: number;
   rep_rest: number;
   set_rest: number;
+  weight_lbs: number | null;
+  edge_mm: number | null;
   duration_seconds: number;
   completed_at: string;
 }

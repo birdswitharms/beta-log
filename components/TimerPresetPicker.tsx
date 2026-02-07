@@ -71,6 +71,8 @@ export default function TimerPresetPicker({ visible, onClose, onSelect }: Props)
                     <Text style={styles.presetName}>{item.name}</Text>
                     <Text style={styles.presetDetail}>
                       {item.sets}s x {item.reps}r | {item.work_time}s work | {item.rep_rest}s rep rest | {item.set_rest}s set rest
+                      {item.weight_lbs !== null ? ` | ${item.weight_lbs} lbs` : ""}
+                      {item.edge_mm !== null ? ` | ${item.edge_mm}mm edge` : ""}
                     </Text>
                   </View>
                   <Pressable

@@ -8,8 +8,9 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useTimerStore, TimerPhase } from "../store/useTimerStore";
-import { savePreset, addWorkout } from "../db/database";
+import { savePreset, addHangboarding } from "../db/database";
 import TimerPresetPicker from "./TimerPresetPicker";
 import { TimerPreset } from "../types";
 
@@ -47,9 +48,32 @@ function phaseColor(phase: TimerPhase): string {
 
 // --- Config Mode ---
 
+function Checkbox({
+  checked,
+  onToggle,
+  label,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <Pressable style={styles.checkboxRow} onPress={onToggle}>
+      <Ionicons
+        name={checked ? "checkbox" : "square-outline"}
+        size={22}
+        color={checked ? "#FF6B35" : "#636366"}
+      />
+      <Text style={styles.checkboxLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function ConfigMode() {
   const { config, setConfig, presetName, setPresetName, start } = useTimerStore();
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [weightEnabled, setWeightEnabled] = useState(config.weightLbs !== null);
+  const [edgeEnabled, setEdgeEnabled] = useState(config.edgeMm !== null);
 
   const handleLoadPreset = (preset: TimerPreset) => {
     useTimerStore.getState().loadPreset(preset.name, {
@@ -58,7 +82,11 @@ function ConfigMode() {
       workTime: preset.work_time,
       repRest: preset.rep_rest,
       setRest: preset.set_rest,
+      weightLbs: preset.weight_lbs,
+      edgeMm: preset.edge_mm,
     });
+    setWeightEnabled(preset.weight_lbs !== null);
+    setEdgeEnabled(preset.edge_mm !== null);
   };
 
   const handleSavePreset = () => {
@@ -73,6 +101,8 @@ function ConfigMode() {
       work_time: config.workTime,
       rep_rest: config.repRest,
       set_rest: config.setRest,
+      weight_lbs: weightEnabled ? config.weightLbs : null,
+      edge_mm: edgeEnabled ? config.edgeMm : null,
     });
     Alert.alert("Saved", `"${presetName.trim()}" saved.`);
   };
@@ -82,7 +112,24 @@ function ConfigMode() {
       Alert.alert("Invalid config", "Sets, reps, and work time must be at least 1.");
       return;
     }
+    // Sync checkbox state into config before starting
+    setConfig({
+      weightLbs: weightEnabled ? (config.weightLbs ?? 0) : null,
+      edgeMm: edgeEnabled ? (config.edgeMm ?? 0) : null,
+    });
     start();
+  };
+
+  const toggleWeight = () => {
+    const next = !weightEnabled;
+    setWeightEnabled(next);
+    setConfig({ weightLbs: next ? (config.weightLbs ?? 0) : null });
+  };
+
+  const toggleEdge = () => {
+    const next = !edgeEnabled;
+    setEdgeEnabled(next);
+    setConfig({ edgeMm: next ? (config.edgeMm ?? 0) : null });
   };
 
   return (
@@ -133,6 +180,26 @@ function ConfigMode() {
         value={config.setRest}
         onChange={(v) => setConfig({ setRest: v })}
       />
+
+      <View style={styles.optionalSection}>
+        <Checkbox checked={weightEnabled} onToggle={toggleWeight} label="Add weight (lbs)" />
+        {weightEnabled && (
+          <NumberField
+            label="Weight (lbs)"
+            value={config.weightLbs ?? 0}
+            onChange={(v) => setConfig({ weightLbs: v })}
+          />
+        )}
+
+        <Checkbox checked={edgeEnabled} onToggle={toggleEdge} label="Add edge size (mm)" />
+        {edgeEnabled && (
+          <NumberField
+            label="Edge (mm)"
+            value={config.edgeMm ?? 0}
+            onChange={(v) => setConfig({ edgeMm: v })}
+          />
+        )}
+      </View>
 
       <Pressable style={styles.startButton} onPress={handleStart}>
         <Text style={styles.startButtonText}>Start Timer</Text>
@@ -270,13 +337,15 @@ function CompletedMode() {
   useEffect(() => {
     if (loggedRef.current) return;
     loggedRef.current = true;
-    addWorkout({
+    addHangboarding({
       preset_name: presetName || "Custom",
       sets: config.sets,
       reps: config.reps,
       work_time: config.workTime,
       rep_rest: config.repRest,
       set_rest: config.setRest,
+      weight_lbs: config.weightLbs,
+      edge_mm: config.edgeMm,
       duration_seconds: totalElapsed,
     });
   }, []);
@@ -287,6 +356,12 @@ function CompletedMode() {
       <Text style={styles.completedStat}>
         {config.sets} sets x {config.reps} reps
       </Text>
+      {config.weightLbs !== null && (
+        <Text style={styles.completedStat}>Weight: {config.weightLbs} lbs</Text>
+      )}
+      {config.edgeMm !== null && (
+        <Text style={styles.completedStat}>Edge: {config.edgeMm} mm</Text>
+      )}
       <Text style={styles.completedStat}>
         Total time: {formatTime(totalElapsed)}
       </Text>
@@ -389,6 +464,23 @@ const styles = StyleSheet.create({
     height: 40,
     textAlign: "center",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  optionalSection: {
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#2C2C2E",
+    paddingTop: 16,
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  checkboxLabel: {
+    color: "#AEAEB2",
+    fontSize: 15,
     fontWeight: "600",
   },
   startButton: {

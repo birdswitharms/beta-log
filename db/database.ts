@@ -32,6 +32,8 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
         work_time INTEGER NOT NULL,
         rep_rest INTEGER NOT NULL,
         set_rest INTEGER NOT NULL,
+        weight_lbs REAL,
+        edge_mm REAL,
         created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
       );
 
@@ -43,10 +45,27 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
         work_time INTEGER NOT NULL,
         rep_rest INTEGER NOT NULL,
         set_rest INTEGER NOT NULL,
+        weight_lbs REAL,
+        edge_mm REAL,
         duration_seconds INTEGER NOT NULL,
         completed_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
       );
     `);
+
+    // Migrate existing tables that may lack new columns
+    const migrations = [
+      `ALTER TABLE timer_presets ADD COLUMN weight_lbs REAL`,
+      `ALTER TABLE timer_presets ADD COLUMN edge_mm REAL`,
+      `ALTER TABLE hangboarding ADD COLUMN weight_lbs REAL`,
+      `ALTER TABLE hangboarding ADD COLUMN edge_mm REAL`,
+    ];
+    for (const sql of migrations) {
+      try {
+        await db.execAsync(sql);
+      } catch {
+        // Column already exists — ignore
+      }
+    }
   }
   return db;
 }
@@ -76,8 +95,8 @@ export async function deleteExercise(id: number): Promise<void> {
 export async function savePreset(preset: NewTimerPreset): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    `INSERT INTO timer_presets (name, sets, reps, work_time, rep_rest, set_rest) VALUES (?, ?, ?, ?, ?, ?)`,
-    [preset.name, preset.sets, preset.reps, preset.work_time, preset.rep_rest, preset.set_rest]
+    `INSERT INTO timer_presets (name, sets, reps, work_time, rep_rest, set_rest, weight_lbs, edge_mm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [preset.name, preset.sets, preset.reps, preset.work_time, preset.rep_rest, preset.set_rest, preset.weight_lbs, preset.edge_mm]
   );
 }
 
@@ -94,18 +113,20 @@ export async function deletePreset(id: number): Promise<void> {
 }
 
 // hangboarding
-export async function addHangboarding(Hangboarding: NewHangboarding): Promise<void> {
+export async function addHangboarding(hangboarding: NewHangboarding): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    `INSERT INTO hangboarding (preset_name, sets, reps, work_time, rep_rest, set_rest, duration_seconds) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO hangboarding (preset_name, sets, reps, work_time, rep_rest, set_rest, weight_lbs, edge_mm, duration_seconds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      Hangboarding.preset_name,
-      Hangboarding.sets,
-      Hangboarding.reps,
-      Hangboarding.work_time,
-      Hangboarding.rep_rest,
-      Hangboarding.set_rest,
-      Hangboarding.duration_seconds,
+      hangboarding.preset_name,
+      hangboarding.sets,
+      hangboarding.reps,
+      hangboarding.work_time,
+      hangboarding.rep_rest,
+      hangboarding.set_rest,
+      hangboarding.weight_lbs,
+      hangboarding.edge_mm,
+      hangboarding.duration_seconds,
     ]
   );
 }
