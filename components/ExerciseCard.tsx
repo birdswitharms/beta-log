@@ -19,14 +19,7 @@ export default function ExerciseCard({ exercise, onDelete }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.name}>{exercise.name}</Text>
-          {exercise.grade ? (
-            <View style={styles.gradeBadge}>
-              <Text style={styles.gradeText}>{exercise.grade}</Text>
-            </View>
-          ) : null}
-        </View>
+        <Text style={styles.name}>{exercise.name}</Text>
         <Pressable
           onPress={() => onDelete(exercise.id)}
           hitSlop={8}
@@ -44,9 +37,9 @@ export default function ExerciseCard({ exercise, onDelete }: Props) {
         </Text>
       )}
 
-      {exercise.notes ? (
-        <Text style={styles.notes}>{exercise.notes}</Text>
-      ) : null}
+      {exercise.weight_lbs !== null && (
+        <Text style={styles.weight}>{exercise.weight_lbs} lbs</Text>
+      )}
 
       <Text style={styles.date}>{formattedDate}</Text>
     </View>
@@ -63,29 +56,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  titleRow: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    flex: 1,
   },
   name: {
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "600",
-  },
-  gradeBadge: {
-    backgroundColor: "#FF6B35",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  gradeText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
+    flex: 1,
   },
   deleteButton: {
     padding: 4,
@@ -95,11 +72,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginTop: 6,
   },
-  notes: {
-    color: "#8E8E93",
+  weight: {
+    color: "#FF6B35",
     fontSize: 14,
-    marginTop: 6,
-    fontStyle: "italic",
+    fontWeight: "600",
+    marginTop: 4,
   },
   date: {
     color: "#636366",

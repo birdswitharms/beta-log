@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,40 +10,73 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { addExercise } from "../db/database";
-import { NewExercise } from "../types";
+
+interface LoggedSet {
+  reps: number;
+  weight: number | null;
+}
 
 interface Props {
   onSaved: () => void;
+  initialName?: string;
 }
 
-export default function ExerciseForm({ onSaved }: Props) {
-  const [name, setName] = useState("");
-  const [sets, setSets] = useState("");
+export default function ExerciseForm({ onSaved, initialName }: Props) {
+  const [name, setName] = useState(initialName ?? "");
+  useEffect(() => {
+    if (initialName) setName(initialName);
+  }, [initialName]);
   const [reps, setReps] = useState("");
-  const [grade, setGrade] = useState("");
-  const [notes, setNotes] = useState("");
+  const [weightEnabled, setWeightEnabled] = useState(true);
+  const [weight, setWeight] = useState("");
+  const [loggedSets, setLoggedSets] = useState<LoggedSet[]>([]);
+
+  const handleLogSet = () => {
+    const repCount = parseInt(reps, 10) || 0;
+    if (repCount < 1) {
+      Alert.alert("Required", "Enter at least 1 rep.");
+      return;
+    }
+    setLoggedSets((prev) => [
+      ...prev,
+      {
+        reps: repCount,
+        weight: weightEnabled ? (parseFloat(weight) || 0) : null,
+      },
+    ]);
+  };
+
+  const handleRemoveSet = (index: number) => {
+    setLoggedSets((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert("Required", "Please enter an exercise name.");
       return;
     }
+    if (loggedSets.length === 0) {
+      Alert.alert("No sets", "Log at least one set before saving.");
+      return;
+    }
 
-    const exercise: NewExercise = {
+    const totalReps = loggedSets.reduce((sum, s) => sum + s.reps, 0);
+    const weights = loggedSets.map((s) => s.weight).filter((w): w is number => w !== null);
+    const maxWeight = weights.length > 0 ? Math.max(...weights) : null;
+
+    await addExercise({
       name: name.trim(),
-      sets: parseInt(sets, 10) || 0,
-      reps: parseInt(reps, 10) || 0,
-      grade: grade.trim(),
-      notes: notes.trim(),
-    };
+      sets: loggedSets.length,
+      reps: totalReps,
+      weight_lbs: maxWeight,
+    });
 
-    await addExercise(exercise);
     setName("");
-    setSets("");
     setReps("");
-    setGrade("");
-    setNotes("");
+    setWeight("");
+    setLoggedSets([]);
     onSaved();
   };
 
@@ -58,56 +91,77 @@ export default function ExerciseForm({ onSaved }: Props) {
           style={styles.input}
           value={name}
           onChangeText={setName}
-          placeholder="e.g. Campus Board, Hangboard, Boulder"
+          placeholder="Pullups, Bench Press, etc."
           placeholderTextColor="#636366"
         />
 
-        <View style={styles.row}>
-          <View style={styles.halfField}>
-            <Text style={styles.label}>Sets</Text>
-            <TextInput
-              style={styles.input}
-              value={sets}
-              onChangeText={setSets}
-              placeholder="0"
-              placeholderTextColor="#636366"
-              keyboardType="number-pad"
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Text style={styles.label}>Reps</Text>
-            <TextInput
-              style={styles.input}
-              value={reps}
-              onChangeText={setReps}
-              placeholder="0"
-              placeholderTextColor="#636366"
-              keyboardType="number-pad"
-            />
-          </View>
-        </View>
-
-        <Text style={styles.label}>Grade (optional)</Text>
+        <Text style={styles.label}>Reps</Text>
         <TextInput
           style={styles.input}
-          value={grade}
-          onChangeText={setGrade}
-          placeholder="e.g. V4, 5.11a"
+          value={reps}
+          onChangeText={setReps}
+          placeholder="0"
           placeholderTextColor="#636366"
+          keyboardType="number-pad"
         />
 
-        <Text style={styles.label}>Notes</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="How did it feel? Any beta to remember?"
-          placeholderTextColor="#636366"
-          multiline
-          numberOfLines={3}
-        />
+        <Pressable
+          style={styles.checkboxRow}
+          onPress={() => setWeightEnabled(!weightEnabled)}
+        >
+          <Ionicons
+            name={weightEnabled ? "checkbox" : "square-outline"}
+            size={22}
+            color={weightEnabled ? "#FF6B35" : "#636366"}
+          />
+          <Text style={styles.checkboxLabel}>Add weight (lbs)</Text>
+        </Pressable>
 
-        <Pressable style={styles.saveButton} onPress={handleSave}>
+        {weightEnabled && (
+          <>
+            <Text style={styles.label}>Weight (lbs)</Text>
+            <TextInput
+              style={styles.input}
+              value={weight}
+              onChangeText={setWeight}
+              placeholder="0"
+              placeholderTextColor="#636366"
+              keyboardType="decimal-pad"
+            />
+          </>
+        )}
+
+        <Pressable style={styles.logSetButton} onPress={handleLogSet}>
+          <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+          <Text style={styles.logSetText}>Log Set</Text>
+        </Pressable>
+
+        {loggedSets.length > 0 && (
+          <View style={styles.setsSection}>
+            <Text style={styles.setsHeader}>
+              {loggedSets.length} {loggedSets.length === 1 ? "set" : "sets"} logged
+            </Text>
+            {loggedSets.map((s, i) => (
+              <View key={i} style={styles.setRow}>
+                <Text style={styles.setNumber}>Set {i + 1}</Text>
+                <Text style={styles.setDetail}>
+                  {s.reps} reps{s.weight !== null ? ` @ ${s.weight} lbs` : ""}
+                </Text>
+                <Pressable onPress={() => handleRemoveSet(i)} hitSlop={8}>
+                  <Ionicons name="close-circle" size={18} color="#FF453A" />
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <Pressable
+          style={[
+            styles.saveButton,
+            loggedSets.length === 0 && styles.saveButtonDisabled,
+          ]}
+          onPress={handleSave}
+        >
           <Text style={styles.saveText}>Save Exercise</Text>
         </Pressable>
       </ScrollView>
@@ -138,15 +192,64 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
   },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  row: {
+  checkboxRow: {
     flexDirection: "row",
-    gap: 12,
+    alignItems: "center",
+    gap: 10,
+    marginTop: 20,
+    marginBottom: 4,
   },
-  halfField: {
+  checkboxLabel: {
+    color: "#AEAEB2",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  logSetButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#2C2C2E",
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "#3A3A3C",
+  },
+  logSetText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  setsSection: {
+    marginTop: 20,
+    backgroundColor: "#2C2C2E",
+    borderRadius: 12,
+    padding: 14,
+  },
+  setsHeader: {
+    color: "#FF6B35",
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 10,
+    textTransform: "uppercase",
+  },
+  setRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#3A3A3C",
+  },
+  setNumber: {
+    color: "#8E8E93",
+    fontSize: 14,
+    fontWeight: "600",
+    width: 50,
+  },
+  setDetail: {
+    color: "#FFFFFF",
+    fontSize: 15,
     flex: 1,
   },
   saveButton: {
@@ -155,6 +258,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
     marginTop: 28,
+  },
+  saveButtonDisabled: {
+    opacity: 0.4,
   },
   saveText: {
     color: "#FFFFFF",

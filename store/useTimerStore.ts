@@ -144,7 +144,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       currentSet: 1,
       currentRep: 1,
       secondsRemaining: state.config.workTime,
-      isRunning: true,
+      isRunning: false,
       totalElapsed: 0,
     })),
 

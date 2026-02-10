@@ -6,6 +6,8 @@ import {
   NewTimerPreset,
   Hangboarding,
   NewHangboarding,
+  Workout,
+  NewWorkout,
 } from "../types";
 
 let db: SQLite.SQLiteDatabase;
@@ -19,8 +21,7 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
         name TEXT NOT NULL,
         sets INTEGER NOT NULL DEFAULT 0,
         reps INTEGER NOT NULL DEFAULT 0,
-        grade TEXT NOT NULL DEFAULT '',
-        notes TEXT NOT NULL DEFAULT '',
+        weight_lbs REAL,
         created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
       );
 
@@ -50,10 +51,19 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
         duration_seconds INTEGER NOT NULL,
         completed_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
       );
+
+      DROP TABLE IF EXISTS workouts;
+      CREATE TABLE IF NOT EXISTS workouts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        exercises TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+      );
     `);
 
     // Migrate existing tables that may lack new columns
     const migrations = [
+      `ALTER TABLE exercises ADD COLUMN weight_lbs REAL`,
       `ALTER TABLE timer_presets ADD COLUMN weight_lbs REAL`,
       `ALTER TABLE timer_presets ADD COLUMN edge_mm REAL`,
       `ALTER TABLE hangboarding ADD COLUMN weight_lbs REAL`,
@@ -74,8 +84,8 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 export async function addExercise(exercise: NewExercise): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    `INSERT INTO exercises (name, sets, reps, grade, notes) VALUES (?, ?, ?, ?, ?)`,
-    [exercise.name, exercise.sets, exercise.reps, exercise.grade, exercise.notes]
+    `INSERT INTO exercises (name, sets, reps, weight_lbs) VALUES (?, ?, ?, ?)`,
+    [exercise.name, exercise.sets, exercise.reps, exercise.weight_lbs]
   );
 }
 
@@ -141,4 +151,39 @@ export async function getHangboarding(): Promise<Hangboarding[]> {
 export async function deleteHangboarding(id: number): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(`DELETE FROM hangboarding WHERE id = ?`, [id]);
+}
+
+// Workouts
+export async function saveWorkout(workout: NewWorkout): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `INSERT INTO workouts (name, exercises) VALUES (?, ?)`,
+    [workout.name, JSON.stringify(workout.exercises)]
+  );
+}
+
+export async function getWorkouts(): Promise<Workout[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ id: number; name: string; exercises: string; created_at: string }>(
+    `SELECT * FROM workouts ORDER BY created_at DESC`
+  );
+  return rows.map((row) => ({
+    ...row,
+    exercises: JSON.parse(row.exercises) as string[],
+  }));
+}
+
+export async function getWorkout(id: number): Promise<Workout | null> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ id: number; name: string; exercises: string; created_at: string }>(
+    `SELECT * FROM workouts WHERE id = ?`,
+    [id]
+  );
+  if (!row) return null;
+  return { ...row, exercises: JSON.parse(row.exercises) as string[] };
+}
+
+export async function deleteWorkout(id: number): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(`DELETE FROM workouts WHERE id = ?`, [id]);
 }

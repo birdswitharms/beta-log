@@ -3,8 +3,7 @@ export interface Exercise {
   name: string;
   sets: number;
   reps: number;
-  grade: string;
-  notes: string;
+  weight_lbs: number | null;
   created_at: string;
 }
 
@@ -40,3 +39,12 @@ export interface Hangboarding {
 }
 
 export type NewHangboarding = Omit<Hangboarding, "id" | "completed_at">;
+
+export interface Workout {
+  id: number;
+  name: string;
+  exercises: string[];
+  created_at: string;
+}
+
+export type NewWorkout = Omit<Workout, "id" | "created_at">;

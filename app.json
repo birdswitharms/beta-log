@@ -32,6 +32,13 @@
     "plugins": [
       "expo-router",
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c680a0bc-aabb-4fcc-9a3f-6e624502193b"
+      }
+    },
+    "owner": "birdswitharms"
   }
 }

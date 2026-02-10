@@ -33,47 +33,9 @@ A mobile app for tracking climbing and bouldering training sessions. Built with 
 
 All data is stored locally on-device via SQLite.
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- iOS: Xcode with iOS Simulator
-- Android: Android Studio with an emulator
-
-### Install & Run
-
-```bash
-git clone <repo-url>
-cd beta-log
-npm install
-npx expo start
-```
-
-Press `i` to open in iOS Simulator or `a` for Android emulator.
-
-### Scripts
-
-```bash
-npm start         # Start Expo dev server
-npm run ios       # Start and open iOS simulator
-npm run android   # Start and open Android emulator
-```
-
-## Project Structure
-
-```
-app/                    File-based routing (Expo Router)
-  (tabs)/               Tab navigation: Hangboarding, Log, History
-components/             Reusable UI components
-db/database.ts          SQLite schema, migrations, and CRUD functions
-store/useTimerStore.ts  Zustand store (timer state machine)
-types/index.ts          Shared TypeScript interfaces
-```
-
 ## Roadmap
 
-- [ ] Video recording and playback for climb attempts
-- [ ] Workout templates and programs
-- [ ] Progress tracking and charts
-- [ ] Cloud sync
+- [ ] Video recording and playback
+- [ ] Session tracking to organize videos, and notes
+- [ ] Workout templates
+- [ ] Progress tracking and charts for both exercise and hangboarding

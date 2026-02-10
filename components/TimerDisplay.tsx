@@ -23,7 +23,7 @@ function formatTime(totalSeconds: number): string {
 function phaseLabel(phase: TimerPhase): string {
   switch (phase) {
     case "work":
-      return "WORK";
+      return "HANG";
     case "repRest":
       return "REP REST";
     case "setRest":
@@ -134,8 +134,6 @@ function ConfigMode() {
 
   return (
     <ScrollView contentContainerStyle={styles.configContainer}>
-      <Text style={styles.screenTitle}>Configure Timer</Text>
-
       <View style={styles.presetRow}>
         <TextInput
           style={[styles.input, styles.presetNameInput]}
@@ -166,7 +164,7 @@ function ConfigMode() {
         onChange={(v) => setConfig({ reps: v })}
       />
       <NumberField
-        label="Work time (sec)"
+        label="Hang time (sec)"
         value={config.workTime}
         onChange={(v) => setConfig({ workTime: v })}
       />
@@ -202,7 +200,7 @@ function ConfigMode() {
       </View>
 
       <Pressable style={styles.startButton} onPress={handleStart}>
-        <Text style={styles.startButtonText}>Start Timer</Text>
+        <Text style={styles.startButtonText}>Begin</Text>
       </Pressable>
 
       <TimerPresetPicker
@@ -259,6 +257,7 @@ function RunningMode() {
     currentRep,
     secondsRemaining,
     isRunning,
+    totalElapsed,
     config,
     pause,
     resume,
@@ -280,11 +279,14 @@ function RunningMode() {
     };
   }, [isRunning, tick]);
 
+  const waitingToBegin = !isRunning && totalElapsed === 0;
   const color = phaseColor(phase);
 
   return (
     <View style={styles.runningContainer}>
-      <Text style={[styles.phaseLabel, { color }]}>{phaseLabel(phase)}</Text>
+      <Text style={[styles.phaseLabel, { color }]}>
+        {waitingToBegin ? "READY" : phaseLabel(phase)}
+      </Text>
 
       <View style={[styles.timerCircle, { borderColor: color }]}>
         <Text style={[styles.timerText, { color }]}>
@@ -308,22 +310,36 @@ function RunningMode() {
         </View>
       </View>
 
-      <View style={styles.controlRow}>
-        <Pressable style={styles.controlButton} onPress={reset}>
-          <Text style={styles.controlText}>Reset</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.controlButton, styles.primaryButton]}
-          onPress={isRunning ? pause : resume}
-        >
-          <Text style={styles.controlText}>
-            {isRunning ? "Pause" : "Resume"}
-          </Text>
-        </Pressable>
-        <Pressable style={styles.controlButton} onPress={skip}>
-          <Text style={styles.controlText}>Skip</Text>
-        </Pressable>
-      </View>
+      {waitingToBegin ? (
+        <View style={styles.controlRow}>
+          <Pressable style={styles.controlButton} onPress={reset}>
+            <Text style={styles.controlText}>Back</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.controlButton, styles.primaryButton]}
+            onPress={resume}
+          >
+            <Text style={styles.controlText}>Start</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={styles.controlRow}>
+          <Pressable style={styles.controlButton} onPress={reset}>
+            <Text style={styles.controlText}>Reset</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.controlButton, styles.primaryButton]}
+            onPress={isRunning ? pause : resume}
+          >
+            <Text style={styles.controlText}>
+              {isRunning ? "Pause" : "Resume"}
+            </Text>
+          </Pressable>
+          <Pressable style={styles.controlButton} onPress={skip}>
+            <Text style={styles.controlText}>Skip</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
