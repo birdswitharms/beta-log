@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -25,9 +25,6 @@ interface Props {
 
 export default function ExerciseForm({ onSaved, initialName }: Props) {
   const [name, setName] = useState(initialName ?? "");
-  useEffect(() => {
-    if (initialName) setName(initialName);
-  }, [initialName]);
   const [reps, setReps] = useState("");
   const [weightEnabled, setWeightEnabled] = useState(true);
   const [weight, setWeight] = useState("");

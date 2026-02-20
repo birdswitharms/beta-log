@@ -2,6 +2,7 @@ import * as SQLite from "expo-sqlite";
 import {
   Exercise,
   NewExercise,
+  SetData,
   TimerPreset,
   NewTimerPreset,
   Hangboarding,
@@ -68,6 +69,7 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       `ALTER TABLE timer_presets ADD COLUMN edge_mm REAL`,
       `ALTER TABLE hangboarding ADD COLUMN weight_lbs REAL`,
       `ALTER TABLE hangboarding ADD COLUMN edge_mm REAL`,
+      `ALTER TABLE exercises ADD COLUMN sets_data TEXT`,
     ];
     for (const sql of migrations) {
       try {
@@ -80,20 +82,30 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   return db;
 }
 
+type ExerciseRow = Omit<Exercise, "sets_data"> & { sets_data: string | null };
+
+function parseExerciseRow(row: ExerciseRow): Exercise {
+  return {
+    ...row,
+    sets_data: row.sets_data ? JSON.parse(row.sets_data) as SetData[] : null,
+  };
+}
+
 // Exercises
 export async function addExercise(exercise: NewExercise): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    `INSERT INTO exercises (name, sets, reps, weight_lbs) VALUES (?, ?, ?, ?)`,
-    [exercise.name, exercise.sets, exercise.reps, exercise.weight_lbs]
+    `INSERT INTO exercises (name, sets, reps, weight_lbs, sets_data) VALUES (?, ?, ?, ?, ?)`,
+    [exercise.name, exercise.sets, exercise.reps, exercise.weight_lbs, exercise.sets_data ? JSON.stringify(exercise.sets_data) : null]
   );
 }
 
 export async function getExercises(): Promise<Exercise[]> {
   const db = await getDatabase();
-  return db.getAllAsync<Exercise>(
+  const rows = await db.getAllAsync<ExerciseRow>(
     `SELECT * FROM exercises ORDER BY created_at DESC`
   );
+  return rows.map(parseExerciseRow);
 }
 
 export async function deleteExercise(id: number): Promise<void> {
@@ -186,4 +198,32 @@ export async function getWorkout(id: number): Promise<Workout | null> {
 export async function deleteWorkout(id: number): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(`DELETE FROM workouts WHERE id = ?`, [id]);
+}
+
+// Date-filtered queries for calendar view
+export async function getLoggedDates(): Promise<Set<string>> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ d: string }>(
+    `SELECT DISTINCT date(created_at) AS d FROM exercises
+     UNION
+     SELECT DISTINCT date(completed_at) AS d FROM hangboarding`
+  );
+  return new Set(rows.map((r) => r.d));
+}
+
+export async function getExercisesByDate(date: string): Promise<Exercise[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<ExerciseRow>(
+    `SELECT * FROM exercises WHERE date(created_at) = ? ORDER BY created_at DESC`,
+    [date]
+  );
+  return rows.map(parseExerciseRow);
+}
+
+export async function getHangboardingByDate(date: string): Promise<Hangboarding[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<Hangboarding>(
+    `SELECT * FROM hangboarding WHERE date(completed_at) = ? ORDER BY completed_at DESC`,
+    [date]
+  );
 }

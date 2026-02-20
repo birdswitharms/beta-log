@@ -8,14 +8,6 @@ interface Props {
 }
 
 export default function ExerciseCard({ exercise, onDelete }: Props) {
-  const date = new Date(exercise.created_at);
-  const formattedDate = date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -29,19 +21,32 @@ export default function ExerciseCard({ exercise, onDelete }: Props) {
         </Pressable>
       </View>
 
-      {(exercise.sets > 0 || exercise.reps > 0) && (
-        <Text style={styles.stats}>
-          {exercise.sets > 0 ? `${exercise.sets} sets` : ""}
-          {exercise.sets > 0 && exercise.reps > 0 ? " x " : ""}
-          {exercise.reps > 0 ? `${exercise.reps} reps` : ""}
-        </Text>
+      {exercise.sets_data && exercise.sets_data.length > 0 ? (
+        <View style={styles.setsContainer}>
+          {exercise.sets_data.map((s, i) => (
+            <View key={i} style={styles.setRow}>
+              <Text style={styles.setLabel}>Set {i + 1}</Text>
+              <Text style={styles.setDetail}>
+                {s.reps} reps{s.weight !== null ? ` @ ${s.weight} lbs` : ""}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        // Fallback for older entries without per-set data
+        <>
+          {(exercise.sets > 0 || exercise.reps > 0) && (
+            <Text style={styles.fallbackStats}>
+              {exercise.sets > 0 ? `${exercise.sets} sets` : ""}
+              {exercise.sets > 0 && exercise.reps > 0 ? " x " : ""}
+              {exercise.reps > 0 ? `${exercise.reps} reps` : ""}
+              {exercise.weight_lbs !== null
+                ? ` @ ${exercise.weight_lbs} lbs`
+                : ""}
+            </Text>
+          )}
+        </>
       )}
-
-      {exercise.weight_lbs !== null && (
-        <Text style={styles.weight}>{exercise.weight_lbs} lbs</Text>
-      )}
-
-      <Text style={styles.date}>{formattedDate}</Text>
     </View>
   );
 }
@@ -67,20 +72,27 @@ const styles = StyleSheet.create({
   deleteButton: {
     padding: 4,
   },
-  stats: {
+  setsContainer: {
+    marginTop: 10,
+  },
+  setRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  setLabel: {
+    color: "#8E8E93",
+    fontSize: 14,
+    fontWeight: "600",
+    width: 50,
+  },
+  setDetail: {
+    color: "#FFFFFF",
+    fontSize: 15,
+  },
+  fallbackStats: {
     color: "#AEAEB2",
     fontSize: 15,
     marginTop: 6,
-  },
-  weight: {
-    color: "#FF6B35",
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 4,
-  },
-  date: {
-    color: "#636366",
-    fontSize: 12,
-    marginTop: 8,
   },
 });

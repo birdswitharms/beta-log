@@ -1,9 +1,15 @@
+export interface SetData {
+  reps: number;
+  weight: number | null;
+}
+
 export interface Exercise {
   id: number;
   name: string;
   sets: number;
   reps: number;
   weight_lbs: number | null;
+  sets_data: SetData[] | null;
   created_at: string;
 }
 

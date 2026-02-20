@@ -36,9 +36,21 @@ export default function HangboardingCard({ hangboarding, onDelete }: Props) {
         </Pressable>
       </View>
 
-      <Text style={styles.config}>
-        {hangboarding.sets}s x {hangboarding.reps}r | {hangboarding.work_time}s work | {hangboarding.rep_rest}s rep rest | {hangboarding.set_rest}s set rest
-      </Text>
+      <View style={styles.thickDivider} />
+
+      <View style={styles.configContainer}>
+        <Text style={styles.config}>
+          {hangboarding.sets} sets x {hangboarding.reps} reps
+        </Text>
+        <View style={styles.divider} />
+        <Text style={styles.config}>
+          {hangboarding.work_time}s hang x {hangboarding.rep_rest}s rest
+        </Text>
+        <View style={styles.divider} />
+        <Text style={styles.config}>
+          {hangboarding.set_rest}s set rest
+        </Text>
+      </View>
 
       {(hangboarding.weight_lbs !== null || hangboarding.edge_mm !== null) && (
         <Text style={styles.extras}>
@@ -50,11 +62,6 @@ export default function HangboardingCard({ hangboarding, onDelete }: Props) {
             .join(" | ")}
         </Text>
       )}
-
-      <View style={styles.footer}>
-        <Text style={styles.duration}>{formatDuration(hangboarding.duration_seconds)}</Text>
-        <Text style={styles.date}>{formattedDate}</Text>
-      </View>
     </View>
   );
 }
@@ -80,10 +87,23 @@ const styles = StyleSheet.create({
   deleteButton: {
     padding: 4,
   },
+  thickDivider: {
+    height: 2,
+    backgroundColor: "#3A3A3C",
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  configContainer: {
+    marginTop: 0,
+  },
   config: {
     color: "#AEAEB2",
     fontSize: 13,
-    marginTop: 6,
+    paddingVertical: 6,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#3A3A3C",
   },
   extras: {
     color: "#FF6B35",

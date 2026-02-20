@@ -9,37 +9,75 @@ import {
   Pressable,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import {
-  getExercises,
   deleteExercise,
-  getHangboarding,
   deleteHangboarding,
+  getLoggedDates,
+  getExercisesByDate,
+  getHangboardingByDate,
 } from "../../db/database";
+import Calendar from "../../components/Calendar";
 import ExerciseCard from "../../components/ExerciseCard";
 import HangboardingCard from "../../components/HangboardingCard";
 import { Exercise, Hangboarding } from "../../types";
 
 type Tab = "hangboarding" | "exercises";
 
+function formatDateHeader(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function HistoryScreen() {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [markedDates, setMarkedDates] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<Tab>("hangboarding");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [hangboarding, setHangboarding] = useState<Hangboarding[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadData = useCallback(async () => {
+  const loadCalendarData = useCallback(async () => {
     setLoading(true);
-    const [ex, wo] = await Promise.all([getExercises(), getHangboarding()]);
+    const dates = await getLoggedDates();
+    setMarkedDates(dates);
+    setLoading(false);
+  }, []);
+
+  const loadDayData = useCallback(async (date: string) => {
+    setLoading(true);
+    const [ex, hb] = await Promise.all([
+      getExercisesByDate(date),
+      getHangboardingByDate(date),
+    ]);
     setExercises(ex);
-    setHangboarding(wo);
+    setHangboarding(hb);
     setLoading(false);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [loadData])
+      if (selectedDate === null) {
+        loadCalendarData();
+      } else {
+        loadDayData(selectedDate);
+      }
+    }, [selectedDate, loadCalendarData, loadDayData])
   );
+
+  const handleSelectDate = (date: string) => {
+    setSelectedDate(date);
+  };
+
+  const handleBack = () => {
+    setSelectedDate(null);
+  };
 
   const handleDeleteExercise = (id: number) => {
     Alert.alert("Delete", "Remove this exercise?", [
@@ -49,7 +87,7 @@ export default function HistoryScreen() {
         style: "destructive",
         onPress: async () => {
           await deleteExercise(id);
-          loadData();
+          if (selectedDate) loadDayData(selectedDate);
         },
       },
     ]);
@@ -63,7 +101,7 @@ export default function HistoryScreen() {
         style: "destructive",
         onPress: async () => {
           await deleteHangboarding(id);
-          loadData();
+          if (selectedDate) loadDayData(selectedDate);
         },
       },
     ]);
@@ -77,8 +115,25 @@ export default function HistoryScreen() {
     );
   }
 
+  // Calendar view
+  if (selectedDate === null) {
+    return (
+      <View style={styles.container}>
+        <Calendar markedDates={markedDates} onSelectDate={handleSelectDate} />
+      </View>
+    );
+  }
+
+  // Day detail view
   return (
     <View style={styles.container}>
+      {/* Back button + date header */}
+      <Pressable onPress={handleBack} style={styles.backButton}>
+        <Ionicons name="chevron-back" size={22} color="#FF6B35" />
+        <Text style={styles.backText}>Calendar</Text>
+      </Pressable>
+      <Text style={styles.dateHeader}>{formatDateHeader(selectedDate)}</Text>
+
       {/* Tab toggle */}
       <View style={styles.tabRow}>
         <Pressable
@@ -86,7 +141,10 @@ export default function HistoryScreen() {
           onPress={() => setTab("hangboarding")}
         >
           <Text
-            style={[styles.tabText, tab === "hangboarding" && styles.tabTextActive]}
+            style={[
+              styles.tabText,
+              tab === "hangboarding" && styles.tabTextActive,
+            ]}
           >
             Hangboarding
           </Text>
@@ -96,7 +154,10 @@ export default function HistoryScreen() {
           onPress={() => setTab("exercises")}
         >
           <Text
-            style={[styles.tabText, tab === "exercises" && styles.tabTextActive]}
+            style={[
+              styles.tabText,
+              tab === "exercises" && styles.tabTextActive,
+            ]}
           >
             Exercises
           </Text>
@@ -108,14 +169,16 @@ export default function HistoryScreen() {
           data={hangboarding}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <HangboardingCard hangboarding={item} onDelete={handleDeleteHangboarding} />
+            <HangboardingCard
+              hangboarding={item}
+              onDelete={handleDeleteHangboarding}
+            />
           )}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.center}>
-              <Text style={styles.emptyText}>No hangboarding yet.</Text>
-              <Text style={styles.emptySubtext}>
-                Complete a timer session to log your first one!
+              <Text style={styles.emptyText}>
+                No hangboarding on this day.
               </Text>
             </View>
           }
@@ -130,10 +193,7 @@ export default function HistoryScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.center}>
-              <Text style={styles.emptyText}>No exercises logged yet.</Text>
-              <Text style={styles.emptySubtext}>
-                Head to the Log tab to add your first one!
-              </Text>
+              <Text style={styles.emptyText}>No exercises on this day.</Text>
             </View>
           }
         />
@@ -152,12 +212,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  backText: {
+    color: "#FF6B35",
+    fontSize: 17,
+    marginLeft: 2,
+  },
+  dateHeader: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 20,
+    textAlign: "center", 
+  },
   tabRow: {
     flexDirection: "row",
     backgroundColor: "#2C2C2E",
     borderRadius: 10,
     padding: 4,
-    margin: 16,
+    marginHorizontal: 16,
     marginBottom: 8,
   },
   tabButton: {
@@ -187,12 +268,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     marginTop: 60,
-  },
-  emptySubtext: {
-    color: "#636366",
-    fontSize: 15,
-    marginTop: 8,
-    textAlign: "center",
-    paddingHorizontal: 40,
   },
 });
