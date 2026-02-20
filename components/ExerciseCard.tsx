@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Exercise } from "../types";
+import { usePreferencesStore, formatWeight } from "../store/usePreferencesStore";
 
 interface Props {
   exercise: Exercise;
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export default function ExerciseCard({ exercise, onDelete }: Props) {
+  const weightUnit = usePreferencesStore((s) => s.weightUnit);
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -27,7 +30,7 @@ export default function ExerciseCard({ exercise, onDelete }: Props) {
             <View key={i} style={styles.setRow}>
               <Text style={styles.setLabel}>Set {i + 1}</Text>
               <Text style={styles.setDetail}>
-                {s.reps} reps{s.weight !== null ? ` @ ${s.weight} lbs` : ""}
+                {s.reps} reps{s.weight !== null ? ` @ ${formatWeight(s.weight, weightUnit)}` : ""}
               </Text>
             </View>
           ))}
@@ -41,7 +44,7 @@ export default function ExerciseCard({ exercise, onDelete }: Props) {
               {exercise.sets > 0 && exercise.reps > 0 ? " x " : ""}
               {exercise.reps > 0 ? `${exercise.reps} reps` : ""}
               {exercise.weight_lbs !== null
-                ? ` @ ${exercise.weight_lbs} lbs`
+                ? ` @ ${formatWeight(exercise.weight_lbs, weightUnit)}`
                 : ""}
             </Text>
           )}

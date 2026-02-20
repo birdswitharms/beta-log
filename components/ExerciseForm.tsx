@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { addExercise } from "../db/database";
+import { usePreferencesStore, convertToLbs } from "../store/usePreferencesStore";
 
 interface LoggedSet {
   reps: number;
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function ExerciseForm({ onSaved, initialName }: Props) {
+  const weightUnit = usePreferencesStore((s) => s.weightUnit);
   const [name, setName] = useState(initialName ?? "");
   const [reps, setReps] = useState("");
   const [weightEnabled, setWeightEnabled] = useState(true);
@@ -60,7 +62,9 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
     }
 
     const totalReps = loggedSets.reduce((sum, s) => sum + s.reps, 0);
-    const weights = loggedSets.map((s) => s.weight).filter((w): w is number => w !== null);
+    const weights = loggedSets
+      .map((s) => s.weight !== null ? convertToLbs(s.weight, weightUnit) : null)
+      .filter((w): w is number => w !== null);
     const maxWeight = weights.length > 0 ? Math.max(...weights) : null;
 
     await addExercise({
@@ -68,6 +72,10 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
       sets: loggedSets.length,
       reps: totalReps,
       weight_lbs: maxWeight,
+      sets_data: loggedSets.map((s) => ({
+        reps: s.reps,
+        weight: s.weight !== null ? convertToLbs(s.weight, weightUnit) : null,
+      })),
     });
 
     setName("");
@@ -111,12 +119,12 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
             size={22}
             color={weightEnabled ? "#FF6B35" : "#636366"}
           />
-          <Text style={styles.checkboxLabel}>Add weight (lbs)</Text>
+          <Text style={styles.checkboxLabel}>{`Add weight (${weightUnit})`}</Text>
         </Pressable>
 
         {weightEnabled && (
           <>
-            <Text style={styles.label}>Weight (lbs)</Text>
+            <Text style={styles.label}>{`Weight (${weightUnit})`}</Text>
             <TextInput
               style={styles.input}
               value={weight}
@@ -142,7 +150,7 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
               <View key={i} style={styles.setRow}>
                 <Text style={styles.setNumber}>Set {i + 1}</Text>
                 <Text style={styles.setDetail}>
-                  {s.reps} reps{s.weight !== null ? ` @ ${s.weight} lbs` : ""}
+                  {s.reps} reps{s.weight !== null ? ` @ ${s.weight} ${weightUnit}` : ""}
                 </Text>
                 <Pressable onPress={() => handleRemoveSet(i)} hitSlop={8}>
                   <Ionicons name="close-circle" size={18} color="#FF453A" />

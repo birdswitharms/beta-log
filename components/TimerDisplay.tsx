@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTimerStore, TimerPhase } from "../store/useTimerStore";
+import { usePreferencesStore, formatWeight, convertToLbs, convertFromLbs } from "../store/usePreferencesStore";
 import { savePreset, addHangboarding } from "../db/database";
 import TimerPresetPicker from "./TimerPresetPicker";
 import { TimerPreset } from "../types";
@@ -71,9 +72,13 @@ function Checkbox({
 
 function ConfigMode() {
   const { config, setConfig, presetName, setPresetName, start } = useTimerStore();
+  const weightUnit = usePreferencesStore((s) => s.weightUnit);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [weightEnabled, setWeightEnabled] = useState(config.weightLbs !== null);
   const [edgeEnabled, setEdgeEnabled] = useState(config.edgeMm !== null);
+  const [displayWeight, setDisplayWeight] = useState(
+    config.weightLbs !== null ? convertFromLbs(config.weightLbs, weightUnit) : 0
+  );
 
   const handleLoadPreset = (preset: TimerPreset) => {
     useTimerStore.getState().loadPreset(preset.name, {
@@ -87,6 +92,9 @@ function ConfigMode() {
     });
     setWeightEnabled(preset.weight_lbs !== null);
     setEdgeEnabled(preset.edge_mm !== null);
+    setDisplayWeight(
+      preset.weight_lbs !== null ? convertFromLbs(preset.weight_lbs, weightUnit) : 0
+    );
   };
 
   const handleSavePreset = () => {
@@ -94,6 +102,7 @@ function ConfigMode() {
       Alert.alert("Name required", "Enter a preset name before saving.");
       return;
     }
+    const weightLbs = weightEnabled ? convertToLbs(displayWeight, weightUnit) : null;
     savePreset({
       name: presetName.trim(),
       sets: config.sets,
@@ -101,7 +110,7 @@ function ConfigMode() {
       work_time: config.workTime,
       rep_rest: config.repRest,
       set_rest: config.setRest,
-      weight_lbs: weightEnabled ? config.weightLbs : null,
+      weight_lbs: weightLbs,
       edge_mm: edgeEnabled ? config.edgeMm : null,
     });
     Alert.alert("Saved", `"${presetName.trim()}" saved.`);
@@ -112,9 +121,9 @@ function ConfigMode() {
       Alert.alert("Invalid config", "Sets, reps, and work time must be at least 1.");
       return;
     }
-    // Sync checkbox state into config before starting
+    const weightLbs = weightEnabled ? convertToLbs(displayWeight, weightUnit) : null;
     setConfig({
-      weightLbs: weightEnabled ? (config.weightLbs ?? 0) : null,
+      weightLbs,
       edgeMm: edgeEnabled ? (config.edgeMm ?? 0) : null,
     });
     start();
@@ -123,13 +132,22 @@ function ConfigMode() {
   const toggleWeight = () => {
     const next = !weightEnabled;
     setWeightEnabled(next);
-    setConfig({ weightLbs: next ? (config.weightLbs ?? 0) : null });
+    if (!next) {
+      setConfig({ weightLbs: null });
+    } else {
+      setConfig({ weightLbs: convertToLbs(displayWeight, weightUnit) });
+    }
   };
 
   const toggleEdge = () => {
     const next = !edgeEnabled;
     setEdgeEnabled(next);
     setConfig({ edgeMm: next ? (config.edgeMm ?? 0) : null });
+  };
+
+  const handleWeightChange = (v: number) => {
+    setDisplayWeight(v);
+    setConfig({ weightLbs: convertToLbs(v, weightUnit) });
   };
 
   return (
@@ -180,12 +198,12 @@ function ConfigMode() {
       />
 
       <View style={styles.optionalSection}>
-        <Checkbox checked={weightEnabled} onToggle={toggleWeight} label="Add weight (lbs)" />
+        <Checkbox checked={weightEnabled} onToggle={toggleWeight} label={`Add weight (${weightUnit})`} />
         {weightEnabled && (
           <NumberField
-            label="Weight (lbs)"
-            value={config.weightLbs ?? 0}
-            onChange={(v) => setConfig({ weightLbs: v })}
+            label={`Weight (${weightUnit})`}
+            value={displayWeight}
+            onChange={handleWeightChange}
           />
         )}
 
@@ -348,6 +366,7 @@ function RunningMode() {
 
 function CompletedMode() {
   const { config, presetName, totalElapsed, reset } = useTimerStore();
+  const weightUnit = usePreferencesStore((s) => s.weightUnit);
   const loggedRef = useRef(false);
 
   useEffect(() => {
@@ -373,7 +392,7 @@ function CompletedMode() {
         {config.sets} sets x {config.reps} reps
       </Text>
       {config.weightLbs !== null && (
-        <Text style={styles.completedStat}>Weight: {config.weightLbs} lbs</Text>
+        <Text style={styles.completedStat}>Weight: {formatWeight(config.weightLbs, weightUnit)}</Text>
       )}
       {config.edgeMm !== null && (
         <Text style={styles.completedStat}>Edge: {config.edgeMm} mm</Text>

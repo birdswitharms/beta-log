@@ -60,6 +60,11 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
         exercises TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
       );
+
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      );
     `);
 
     // Migrate existing tables that may lack new columns
@@ -225,5 +230,23 @@ export async function getHangboardingByDate(date: string): Promise<Hangboarding[
   return db.getAllAsync<Hangboarding>(
     `SELECT * FROM hangboarding WHERE date(completed_at) = ? ORDER BY completed_at DESC`,
     [date]
+  );
+}
+
+// Settings
+export async function getSetting(key: string): Promise<string | null> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ value: string }>(
+    `SELECT value FROM settings WHERE key = ?`,
+    [key]
+  );
+  return row?.value ?? null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`,
+    [key, value]
   );
 }

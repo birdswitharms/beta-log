@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Hangboarding } from "../types";
+import { usePreferencesStore, formatWeight } from "../store/usePreferencesStore";
 
 interface Props {
   hangboarding: Hangboarding;
@@ -15,6 +16,7 @@ function formatDuration(seconds: number): string {
 }
 
 export default function HangboardingCard({ hangboarding, onDelete }: Props) {
+  const weightUnit = usePreferencesStore((s) => s.weightUnit);
   const date = new Date(hangboarding.completed_at);
   const formattedDate = date.toLocaleDateString(undefined, {
     month: "short",
@@ -55,7 +57,7 @@ export default function HangboardingCard({ hangboarding, onDelete }: Props) {
       {(hangboarding.weight_lbs !== null || hangboarding.edge_mm !== null) && (
         <Text style={styles.extras}>
           {[
-            hangboarding.weight_lbs !== null ? `${hangboarding.weight_lbs} lbs` : null,
+            hangboarding.weight_lbs !== null ? formatWeight(hangboarding.weight_lbs, weightUnit) : null,
             hangboarding.edge_mm !== null ? `${hangboarding.edge_mm}mm edge` : null,
           ]
             .filter(Boolean)

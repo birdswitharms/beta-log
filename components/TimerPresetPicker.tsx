@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { getPresets, deletePreset } from "../db/database";
 import { TimerPreset } from "../types";
+import { usePreferencesStore, formatWeight } from "../store/usePreferencesStore";
 
 interface Props {
   visible: boolean;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function TimerPresetPicker({ visible, onClose, onSelect }: Props) {
+  const weightUnit = usePreferencesStore((s) => s.weightUnit);
   const [presets, setPresets] = useState<TimerPreset[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +73,7 @@ export default function TimerPresetPicker({ visible, onClose, onSelect }: Props)
                     <Text style={styles.presetName}>{item.name}</Text>
                     <Text style={styles.presetDetail}>
                       {item.sets}s x {item.reps}r | {item.work_time}s work | {item.rep_rest}s rep rest | {item.set_rest}s set rest
-                      {item.weight_lbs !== null ? ` | ${item.weight_lbs} lbs` : ""}
+                      {item.weight_lbs !== null ? ` | ${formatWeight(item.weight_lbs, weightUnit)}` : ""}
                       {item.edge_mm !== null ? ` | ${item.edge_mm}mm edge` : ""}
                     </Text>
                   </View>
