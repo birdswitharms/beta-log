@@ -99,6 +99,15 @@ export default function TabLayout() {
         }}
       >
         <Tabs.Screen
+          name="videos"
+          options={{
+            title: "Videos",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="videocam-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="index"
           options={{
             title: "Hangboarding",
