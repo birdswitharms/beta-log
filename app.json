@@ -15,9 +15,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.betalog.app"
+      "bundleIdentifier": "com.betalog.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Beta Log needs camera access to record climbing videos.",
+        "NSMicrophoneUsageDescription": "Beta Log needs microphone access to record audio with climbing videos.",
+        "NSPhotoLibraryUsageDescription": "Beta Log needs photo library access to save recorded climbing videos."
+      }
     },
     "android": {
+      "permissions": [
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -31,7 +40,22 @@
     },
     "plugins": [
       "expo-router",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Beta Log needs camera access to record climbing videos.",
+          "microphonePermission": "Beta Log needs microphone access to record audio with climbing videos."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Beta Log needs photo library access to view your climbing videos.",
+          "savePhotosPermission": "Beta Log needs photo library access to save recorded climbing videos.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
     ],
     "extra": {
       "router": {},

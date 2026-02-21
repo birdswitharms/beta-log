@@ -1,26 +1,186 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  SectionList,
+  Modal,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import { useFocusEffect, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { getVideos, deleteVideo } from "../../db/database";
+import { showAlert } from "../../components/CustomAlert";
+import VideoCard from "../../components/VideoCard";
+import { Video } from "../../types";
+
+interface VideoSection {
+  title: string;
+  data: Video[];
+}
+
+function formatDateHeader(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function groupVideosByDate(videos: Video[]): VideoSection[] {
+  const groups: Record<string, Video[]> = {};
+  for (const video of videos) {
+    const dateKey = video.recorded_at.split(" ")[0] || video.recorded_at.split("T")[0];
+    if (!groups[dateKey]) groups[dateKey] = [];
+    groups[dateKey].push(video);
+  }
+
+  return Object.keys(groups)
+    .sort((a, b) => b.localeCompare(a))
+    .map((dateKey) => ({
+      title: formatDateHeader(dateKey),
+      data: groups[dateKey],
+    }));
+}
+
+const TIMER_OPTIONS = [5, 10, 20];
 
 export default function VideosScreen() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [timerModalVisible, setTimerModalVisible] = useState(false);
+
+  const loadVideos = useCallback(async () => {
+    setLoading(true);
+    const result = await getVideos();
+    setVideos(result);
+    setLoading(false);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadVideos();
+    }, [loadVideos])
+  );
+
+  const handleRecordPress = () => {
+    setTimerModalVisible(true);
+  };
+
+  const handleTimerSelect = (seconds: number) => {
+    setTimerModalVisible(false);
+    router.push({ pathname: "/camera", params: { countdown: seconds.toString() } });
+  };
+
+  const handleDelete = (id: number) => {
+    showAlert({
+      title: "Delete Video",
+      message: "Remove this video from your log? The file will remain in your gallery.",
+      buttons: [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await deleteVideo(id);
+            loadVideos();
+          },
+        },
+      ],
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator color="#FF6B35" />
+      </View>
+    );
+  }
+
+  const sections = groupVideosByDate(videos);
+
   return (
     <View style={styles.container}>
-      <View style={styles.center}>
-        <Ionicons name="videocam-outline" size={64} color="#636366" />
-        <Text style={styles.emptyText}>No videos yet</Text>
-        <Text style={styles.emptySubtext}>
-          Record a climbing attempt or add a collection to get started.
-        </Text>
-        <View style={styles.buttons}>
-          <Pressable style={styles.primaryButton}>
-            <Ionicons name="videocam" size={20} color="#FFFFFF" />
-            <Text style={styles.primaryButtonText}>Record Video</Text>
-          </Pressable>
-          <Pressable style={styles.secondaryButton}>
-            <Ionicons name="folder-open-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.secondaryButtonText}>Add Collection</Text>
-          </Pressable>
+      {videos.length === 0 ? (
+        <View style={styles.center}>
+          <Ionicons name="videocam-outline" size={64} color="#636366" />
+          <Text style={styles.emptyText}>No videos yet</Text>
+          <View style={styles.buttons}>
+            <Pressable style={styles.primaryButton} onPress={handleRecordPress}>
+              <Ionicons name="videocam" size={20} color="#FFFFFF" />
+              <Text style={styles.primaryButtonText}>Record Video</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      ) : (
+        <>
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <VideoCard video={item} onDelete={handleDelete} />
+            )}
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={styles.sectionHeader}>{title}</Text>
+            )}
+            contentContainerStyle={styles.list}
+          />
+          <Pressable style={styles.fab} onPress={handleRecordPress}>
+            <Ionicons name="videocam" size={24} color="#FFFFFF" />
+          </Pressable>
+        </>
+      )}
+
+      {/* Timer Selection Modal */}
+      <Modal
+        visible={timerModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setTimerModalVisible(false)}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Countdown Timer</Text>
+              <Pressable
+                onPress={() => setTimerModalVisible(false)}
+                hitSlop={8}
+              >
+                <Ionicons name="close" size={22} color="#AEAEB2" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.sheetSubtitle}>
+              Choose how long you need to get into position!
+            </Text>
+
+            <View style={styles.timerRow}>
+              {TIMER_OPTIONS.map((seconds) => (
+                <Pressable
+                  key={seconds}
+                  style={styles.timerOption}
+                  onPress={() => handleTimerSelect(seconds)}
+                >
+                  <Text style={styles.timerNumber}>{seconds}</Text>
+                  <Text style={styles.timerLabel}>seconds</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => setTimerModalVisible(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -67,18 +227,99 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-  secondaryButton: {
-    flexDirection: "row",
-    alignItems: "center",
+  sectionHeader: {
+    color: "#AEAEB2",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  list: {
+    padding: 16,
+    paddingTop: 8,
+    paddingBottom: 100,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FF6B35",
     justifyContent: "center",
-    gap: 8,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: "#1C1C1E",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 40,
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2C2C2E",
+  },
+  sheetTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  sheetSubtitle: {
+    color: "#AEAEB2",
+    fontSize: 15,
+    lineHeight: 22,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  timerRow: {
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  timerOption: {
+    flex: 1,
     backgroundColor: "#2C2C2E",
     borderRadius: 12,
-    padding: 14,
+    paddingVertical: 20,
+    alignItems: "center",
   },
-  secondaryButtonText: {
-    color: "#FFFFFF",
+  timerNumber: {
+    color: "#FF6B35",
+    fontSize: 32,
+    fontWeight: "800",
+  },
+  timerLabel: {
+    color: "#AEAEB2",
+    fontSize: 13,
+    marginTop: 4,
+  },
+  cancelButton: {
+    backgroundColor: "#2C2C2E",
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginHorizontal: 20,
+    alignItems: "center",
+  },
+  cancelText: {
+    color: "#AEAEB2",
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "600",
   },
 });

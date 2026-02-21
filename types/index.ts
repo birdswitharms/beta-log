@@ -54,3 +54,13 @@ export interface Workout {
 }
 
 export type NewWorkout = Omit<Workout, "id" | "created_at">;
+
+export interface Video {
+  id: number;
+  uri: string;
+  filename: string;
+  duration_seconds: number;
+  recorded_at: string;
+}
+
+export type NewVideo = Omit<Video, "id" | "recorded_at">;

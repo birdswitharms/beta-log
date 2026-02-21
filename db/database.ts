@@ -9,6 +9,8 @@ import {
   NewHangboarding,
   Workout,
   NewWorkout,
+  Video,
+  NewVideo,
 } from "../types";
 
 let db: SQLite.SQLiteDatabase;
@@ -59,6 +61,14 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
         name TEXT NOT NULL,
         exercises TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+      );
+
+      CREATE TABLE IF NOT EXISTS videos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        uri TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        duration_seconds INTEGER NOT NULL,
+        recorded_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
       );
 
       CREATE TABLE IF NOT EXISTS settings (
@@ -205,13 +215,36 @@ export async function deleteWorkout(id: number): Promise<void> {
   await db.runAsync(`DELETE FROM workouts WHERE id = ?`, [id]);
 }
 
+// Videos
+export async function addVideo(video: NewVideo): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `INSERT INTO videos (uri, filename, duration_seconds) VALUES (?, ?, ?)`,
+    [video.uri, video.filename, video.duration_seconds]
+  );
+}
+
+export async function getVideos(): Promise<Video[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<Video>(
+    `SELECT * FROM videos ORDER BY recorded_at DESC`
+  );
+}
+
+export async function deleteVideo(id: number): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(`DELETE FROM videos WHERE id = ?`, [id]);
+}
+
 // Date-filtered queries for calendar view
 export async function getLoggedDates(): Promise<Set<string>> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<{ d: string }>(
     `SELECT DISTINCT date(created_at) AS d FROM exercises
      UNION
-     SELECT DISTINCT date(completed_at) AS d FROM hangboarding`
+     SELECT DISTINCT date(completed_at) AS d FROM hangboarding
+     UNION
+     SELECT DISTINCT date(recorded_at) AS d FROM videos`
   );
   return new Set(rows.map((r) => r.d));
 }

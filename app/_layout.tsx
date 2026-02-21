@@ -53,6 +53,13 @@ export default function RootLayout() {
             title: "Workout",
           }}
         />
+        <Stack.Screen
+          name="camera"
+          options={{
+            headerShown: false,
+            presentation: "fullScreenModal",
+          }}
+        />
       </Stack>
       <CustomAlert />
     </SafeAreaProvider>
