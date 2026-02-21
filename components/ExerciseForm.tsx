@@ -5,7 +5,6 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { addExercise } from "../db/database";
 import { usePreferencesStore, convertToLbs } from "../store/usePreferencesStore";
+import { showAlert } from "./CustomAlert";
 
 interface LoggedSet {
   reps: number;
@@ -35,7 +35,7 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
   const handleLogSet = () => {
     const repCount = parseInt(reps, 10) || 0;
     if (repCount < 1) {
-      Alert.alert("Required", "Enter at least 1 rep.");
+      showAlert({ title: "Required", message: "Enter at least 1 rep." });
       return;
     }
     setLoggedSets((prev) => [
@@ -53,11 +53,11 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert("Required", "Please enter an exercise name.");
+      showAlert({ title: "Required", message: "Please enter an exercise name." });
       return;
     }
     if (loggedSets.length === 0) {
-      Alert.alert("No sets", "Log at least one set before saving.");
+      showAlert({ title: "No sets", message: "Log at least one set before saving." });
       return;
     }
 

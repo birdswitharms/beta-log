@@ -1,6 +1,7 @@
-import { Alert, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import ExerciseForm from "../../components/ExerciseForm";
+import { showAlert } from "../../components/CustomAlert";
 
 export default function LogScreen() {
   const { exerciseName } = useLocalSearchParams<{ exerciseName?: string }>();
@@ -9,7 +10,7 @@ export default function LogScreen() {
     <View style={styles.container}>
       <ExerciseForm
         initialName={exerciseName}
-        onSaved={() => Alert.alert("Saved", "Exercise logged successfully!")}
+        onSaved={() => showAlert({ title: "Saved", message: "Exercise logged successfully!" })}
       />
     </View>
   );

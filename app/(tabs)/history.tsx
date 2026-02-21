@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   Pressable,
 } from "react-native";
@@ -17,6 +16,7 @@ import {
   getExercisesByDate,
   getHangboardingByDate,
 } from "../../db/database";
+import { showAlert } from "../../components/CustomAlert";
 import Calendar from "../../components/Calendar";
 import ExerciseCard from "../../components/ExerciseCard";
 import HangboardingCard from "../../components/HangboardingCard";
@@ -80,31 +80,39 @@ export default function HistoryScreen() {
   };
 
   const handleDeleteExercise = (id: number) => {
-    Alert.alert("Delete", "Remove this exercise?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteExercise(id);
-          if (selectedDate) loadDayData(selectedDate);
+    showAlert({
+      title: "Delete",
+      message: "Remove this exercise?",
+      buttons: [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await deleteExercise(id);
+            if (selectedDate) loadDayData(selectedDate);
+          },
         },
-      },
-    ]);
+      ],
+    });
   };
 
   const handleDeleteHangboarding = (id: number) => {
-    Alert.alert("Delete", "Remove this hangboarding routine?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteHangboarding(id);
-          if (selectedDate) loadDayData(selectedDate);
+    showAlert({
+      title: "Delete",
+      message: "Remove this hangboarding routine?",
+      buttons: [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await deleteHangboarding(id);
+            if (selectedDate) loadDayData(selectedDate);
+          },
         },
-      },
-    ]);
+      ],
+    });
   };
 
   if (loading) {

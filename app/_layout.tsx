@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { usePreferencesStore } from "../store/usePreferencesStore";
 import WelcomeScreen from "../components/WelcomeScreen";
+import CustomAlert from "../components/CustomAlert";
 
 export default function RootLayout() {
   const { loaded, onboardingComplete, load } = usePreferencesStore();
@@ -53,6 +54,7 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+      <CustomAlert />
     </SafeAreaProvider>
   );
 }

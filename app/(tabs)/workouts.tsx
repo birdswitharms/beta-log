@@ -6,12 +6,12 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, router } from "expo-router";
 import { getWorkouts, saveWorkout } from "../../db/database";
+import { showAlert } from "../../components/CustomAlert";
 import { Workout } from "../../types";
 
 export default function WorkoutsScreen() {
@@ -48,11 +48,11 @@ export default function WorkoutsScreen() {
 
   const handleSaveWorkout = async () => {
     if (!workoutName.trim()) {
-      Alert.alert("Required", "Please enter a workout name.");
+      showAlert({ title: "Required", message: "Please enter a workout name." });
       return;
     }
     if (exercises.length === 0) {
-      Alert.alert("Required", "Add at least one exercise.");
+      showAlert({ title: "Required", message: "Add at least one exercise." });
       return;
     }
     await saveWorkout({ name: workoutName.trim(), exercises });

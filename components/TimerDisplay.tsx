@@ -6,12 +6,12 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTimerStore, TimerPhase } from "../store/useTimerStore";
 import { usePreferencesStore, formatWeight, convertToLbs, convertFromLbs } from "../store/usePreferencesStore";
 import { savePreset, addHangboarding } from "../db/database";
+import { showAlert } from "./CustomAlert";
 import TimerPresetPicker from "./TimerPresetPicker";
 import { TimerPreset } from "../types";
 
@@ -99,7 +99,7 @@ function ConfigMode() {
 
   const handleSavePreset = () => {
     if (!presetName.trim()) {
-      Alert.alert("Name required", "Enter a preset name before saving.");
+      showAlert({ title: "Name required", message: "Enter a preset name before saving." });
       return;
     }
     const weightLbs = weightEnabled ? convertToLbs(displayWeight, weightUnit) : null;
@@ -113,12 +113,12 @@ function ConfigMode() {
       weight_lbs: weightLbs,
       edge_mm: edgeEnabled ? config.edgeMm : null,
     });
-    Alert.alert("Saved", `"${presetName.trim()}" saved.`);
+    showAlert({ title: "Saved", message: `"${presetName.trim()}" saved.` });
   };
 
   const handleStart = () => {
     if (config.sets < 1 || config.reps < 1 || config.workTime < 1) {
-      Alert.alert("Invalid config", "Sets, reps, and work time must be at least 1.");
+      showAlert({ title: "Invalid config", message: "Sets, reps, and work time must be at least 1." });
       return;
     }
     const weightLbs = weightEnabled ? convertToLbs(displayWeight, weightUnit) : null;

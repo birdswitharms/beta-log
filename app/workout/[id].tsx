@@ -5,12 +5,12 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, router, useFocusEffect, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getWorkout, deleteWorkout } from "../../db/database";
+import { showAlert } from "../../components/CustomAlert";
 import { Workout } from "../../types";
 
 export default function WorkoutDetailScreen() {
@@ -30,17 +30,21 @@ export default function WorkoutDetailScreen() {
   );
 
   const handleDelete = () => {
-    Alert.alert("Delete", "Remove this workout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteWorkout(Number(id));
-          router.back();
+    showAlert({
+      title: "Delete",
+      message: "Remove this workout?",
+      buttons: [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await deleteWorkout(Number(id));
+            router.back();
+          },
         },
-      },
-    ]);
+      ],
+    });
   };
 
   if (loading) {
