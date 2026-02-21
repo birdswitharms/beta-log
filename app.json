@@ -54,7 +54,8 @@
         {
           "photosPermission": "Beta Log needs photo library access to view your climbing videos.",
           "savePhotosPermission": "Beta Log needs photo library access to save recorded climbing videos.",
-          "isAccessMediaLocationEnabled": true
+          "isAccessMediaLocationEnabled": true,
+          "granularPermissions": ["photo", "video", "audio"]
         }
       ]
     ],
