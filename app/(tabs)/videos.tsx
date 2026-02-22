@@ -10,7 +10,9 @@ import {
 } from "react-native";
 import { useFocusEffect, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { getVideos, deleteVideo } from "../../db/database";
+import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
+import { getVideos, deleteVideo, addVideo, addVideoWithDate } from "../../db/database";
 import { showAlert } from "../../components/CustomAlert";
 import VideoCard from "../../components/VideoCard";
 import { Video } from "../../types";
@@ -62,6 +64,7 @@ const TIMER_OPTIONS = [5, 10, 20];
 export default function VideosScreen() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
   const [timerModalVisible, setTimerModalVisible] = useState(false);
 
   const loadVideos = useCallback(async () => {
@@ -84,6 +87,45 @@ export default function VideosScreen() {
   const handleTimerSelect = (seconds: number) => {
     setTimerModalVisible(false);
     router.push({ pathname: "/camera", params: { countdown: seconds.toString() } });
+  };
+
+  const handleImport = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "videos",
+      allowsMultipleSelection: true,
+    });
+
+    if (result.canceled || result.assets.length === 0) return;
+
+    setImporting(true);
+    for (const asset of result.assets) {
+      const filename = asset.fileName ?? asset.uri.split("/").pop() ?? "imported.mp4";
+      const duration = Math.round((asset.duration ?? 0) / 1000);
+
+      let recordedAt: string | null = null;
+      if (asset.assetId) {
+        try {
+          const info = await MediaLibrary.getAssetInfoAsync(asset.assetId);
+          if (info.creationTime) {
+            const d = new Date(info.creationTime);
+            recordedAt = d.toISOString().replace("T", " ").slice(0, 19);
+          }
+        } catch {
+          // Fall through to default
+        }
+      }
+
+      if (recordedAt) {
+        await addVideoWithDate(
+          { uri: asset.uri, filename, duration_seconds: duration },
+          recordedAt
+        );
+      } else {
+        await addVideo({ uri: asset.uri, filename, duration_seconds: duration });
+      }
+    }
+    setImporting(false);
+    loadVideos();
   };
 
   const handleDelete = (id: number) => {
@@ -116,6 +158,13 @@ export default function VideosScreen() {
 
   return (
     <View style={styles.container}>
+      {importing && (
+        <View style={styles.importingBanner}>
+          <ActivityIndicator color="#FF6B35" size="small" />
+          <Text style={styles.importingText}>Importing videos…</Text>
+        </View>
+      )}
+
       {videos.length === 0 ? (
         <View style={styles.center}>
           <Ionicons name="videocam-outline" size={64} color="#636366" />
@@ -124,6 +173,10 @@ export default function VideosScreen() {
             <Pressable style={styles.primaryButton} onPress={handleRecordPress}>
               <Ionicons name="videocam" size={20} color="#FFFFFF" />
               <Text style={styles.primaryButtonText}>Record Video</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryButton} onPress={handleImport}>
+              <Ionicons name="images-outline" size={20} color="#FF6B35" />
+              <Text style={styles.secondaryButtonText}>Import from Gallery</Text>
             </Pressable>
           </View>
         </View>
@@ -148,9 +201,14 @@ export default function VideosScreen() {
             )}
             contentContainerStyle={styles.list}
           />
-          <Pressable style={styles.fab} onPress={handleRecordPress}>
-            <Ionicons name="videocam" size={24} color="#FFFFFF" />
-          </Pressable>
+          <View style={styles.fabColumn}>
+            <Pressable style={styles.fabSecondary} onPress={handleImport}>
+              <Ionicons name="images-outline" size={24} color="#FFFFFF" />
+            </Pressable>
+            <Pressable style={styles.fab} onPress={handleRecordPress}>
+              <Ionicons name="videocam" size={24} color="#FFFFFF" />
+            </Pressable>
+          </View>
         </>
       )}
 
@@ -245,6 +303,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  secondaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#FF6B35",
+    borderRadius: 12,
+    padding: 14,
+  },
+  secondaryButtonText: {
+    color: "#FF6B35",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  importingBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 10,
+    backgroundColor: "#2C2C2E",
+  },
+  importingText: {
+    color: "#AEAEB2",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   row: {
     flexDirection: "row",
   },
@@ -264,10 +350,27 @@ const styles = StyleSheet.create({
     padding: 2,
     paddingBottom: 100,
   },
-  fab: {
+  fabColumn: {
     position: "absolute",
     bottom: 24,
     right: 20,
+    alignItems: "center",
+    gap: 12,
+  },
+  fabSecondary: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#2C2C2E",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,

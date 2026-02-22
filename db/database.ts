@@ -241,6 +241,14 @@ export async function addVideo(video: NewVideo): Promise<void> {
   );
 }
 
+export async function addVideoWithDate(video: NewVideo, recordedAt: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `INSERT INTO videos (uri, filename, duration_seconds, recorded_at) VALUES (?, ?, ?, ?)`,
+    [video.uri, video.filename, video.duration_seconds, recordedAt]
+  );
+}
+
 export async function getVideos(): Promise<Video[]> {
   const db = await getDatabase();
   return db.getAllAsync<Video>(
