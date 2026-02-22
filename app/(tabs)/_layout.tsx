@@ -3,7 +3,7 @@ import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { usePreferencesStore } from "../../store/usePreferencesStore";
-import { seedDatabase } from "../../db/database";
+import { seedDatabase, clearDatabase } from "../../db/database";
 import { showAlert } from "../../components/CustomAlert";
 
 function SettingsModal({
@@ -74,6 +74,16 @@ function SettingsModal({
                 }}
               >
                 <Text style={modalStyles.seedButtonText}>Seed Database</Text>
+              </Pressable>
+              <Pressable
+                style={modalStyles.clearButton}
+                onPress={async () => {
+                  await clearDatabase();
+                  onClose();
+                  showAlert({ title: "Database cleared!", message: "All data has been removed." });
+                }}
+              >
+                <Text style={modalStyles.clearButtonText}>Clear Database</Text>
               </Pressable>
             </>
           )}
@@ -236,6 +246,19 @@ const modalStyles = StyleSheet.create({
   },
   seedButtonText: {
     color: "#FF6B35",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  clearButton: {
+    marginHorizontal: 20,
+    marginTop: 10,
+    backgroundColor: "#2C2C2E",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  clearButtonText: {
+    color: "#FF453A",
     fontSize: 16,
     fontWeight: "600",
   },

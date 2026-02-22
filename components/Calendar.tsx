@@ -70,16 +70,19 @@ function buildGrid(year: number, month: number): DayCell[][] {
     });
   }
 
-  // Next month fill
-  const remaining = 42 - cells.length;
-  for (let day = 1; day <= remaining; day++) {
-    const nextMonth = month === 11 ? 0 : month + 1;
-    const nextYear = month === 11 ? year + 1 : year;
-    cells.push({
-      day,
-      dateString: toDateString(nextYear, nextMonth, day),
-      isCurrentMonth: false,
-    });
+  // Next month fill — only enough to complete the last row
+  const remainder = cells.length % 7;
+  if (remainder > 0) {
+    const fill = 7 - remainder;
+    for (let day = 1; day <= fill; day++) {
+      const nextMonth = month === 11 ? 0 : month + 1;
+      const nextYear = month === 11 ? year + 1 : year;
+      cells.push({
+        day,
+        dateString: toDateString(nextYear, nextMonth, day),
+        isCurrentMonth: false,
+      });
+    }
   }
 
   // Split into rows of 7
@@ -199,9 +202,10 @@ export default function Calendar({ markedDates, onSelectDate }: CalendarProps) {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: "#1C1C1E",
     paddingHorizontal: 12,
-    paddingTop: 8,
+    justifyContent: "center",
   },
   header: {
     flexDirection: "row",

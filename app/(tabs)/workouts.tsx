@@ -127,56 +127,47 @@ export default function WorkoutsScreen() {
           </View>
         </View>
       ) : (
-        <FlatList
-          data={workouts}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.workoutRow}
-              onPress={() => router.push(`/workout/${item.id}`)}
-            >
-              <View style={styles.workoutInfo}>
-                <Text style={styles.workoutName}>{item.name}</Text>
-                <Text style={styles.workoutCount}>
-                  {item.exercises.length}{" "}
-                  {item.exercises.length === 1 ? "exercise" : "exercises"}
+        <>
+          <FlatList
+            data={workouts}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <Pressable
+                style={styles.workoutRow}
+                onPress={() => router.push(`/workout/${item.id}`)}
+              >
+                <View style={styles.workoutInfo}>
+                  <Text style={styles.workoutName}>{item.name}</Text>
+                  <Text style={styles.workoutCount}>
+                    {item.exercises.length}{" "}
+                    {item.exercises.length === 1 ? "exercise" : "exercises"}
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color="#636366"
+                />
+              </Pressable>
+            )}
+            contentContainerStyle={workouts.length === 0 ? styles.emptyList : styles.list}
+            ListEmptyComponent={
+              <View style={styles.center}>
+                <Text style={styles.emptyText}>No workouts yet.</Text>
+                <Text style={styles.emptySubtext}>
+                  Create a workout to get started!
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="#636366"
-              />
-            </Pressable>
-          )}
-          contentContainerStyle={workouts.length === 0 ? styles.emptyList : styles.list}
-          ListHeaderComponent={
-            workouts.length > 0 ? (
-              <Pressable
-                style={styles.createButton}
-                onPress={() => setCreating(true)}
-              >
-                <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.createText}>Create Workout</Text>
-              </Pressable>
-            ) : null
-          }
-          ListEmptyComponent={
-            <View style={styles.center}>
-              <Text style={styles.emptyText}>No workouts yet.</Text>
-              <Text style={styles.emptySubtext}>
-                Create a workout to get started!
-              </Text>
-              <Pressable
-                style={styles.emptyCreateButton}
-                onPress={() => setCreating(true)}
-              >
-                <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.createText}>Create Workout</Text>
-              </Pressable>
-            </View>
-          }
-        />
+            }
+          />
+          <Pressable
+            style={styles.createButton}
+            onPress={() => setCreating(true)}
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.createText}>Create Workout</Text>
+          </Pressable>
+        </>
       )}
     </View>
   );
@@ -200,18 +191,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF6B35",
     borderRadius: 12,
     padding: 14,
-    marginBottom: 8,
-  },
-  emptyCreateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#FF6B35",
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 24,
-    width: "100%",
+    marginHorizontal: 16,
+    marginBottom: 16,
   },
   createText: {
     color: "#FFFFFF",

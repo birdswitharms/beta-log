@@ -301,6 +301,18 @@ export async function setSetting(key: string, value: string): Promise<void> {
   );
 }
 
+// Clear all data from the database (preserves settings)
+export async function clearDatabase(): Promise<void> {
+  const db = await getDatabase();
+  await db.execAsync(`
+    DELETE FROM exercises;
+    DELETE FROM hangboarding;
+    DELETE FROM timer_presets;
+    DELETE FROM videos;
+    DELETE FROM workouts;
+  `);
+}
+
 // Seed database with sample data for development
 export async function seedDatabase(): Promise<void> {
   const db = await getDatabase();
