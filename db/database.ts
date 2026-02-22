@@ -283,3 +283,100 @@ export async function setSetting(key: string, value: string): Promise<void> {
     [key, value]
   );
 }
+
+// Seed database with sample data for development
+export async function seedDatabase(): Promise<void> {
+  const db = await getDatabase();
+
+  // Helper to build datetime strings relative to now
+  const daysAgo = (days: number, hours = 12): string => {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    d.setHours(hours, 0, 0, 0);
+    return d.toISOString().replace("T", " ").slice(0, 19);
+  };
+
+  const today = daysAgo(0, 10);
+  const todayAfternoon = daysAgo(0, 14);
+  const yesterday = daysAgo(1, 9);
+  const threeDaysAgo = daysAgo(3, 11);
+  const weekAgo = daysAgo(7, 16);
+
+  // Clear all tables except settings
+  await db.execAsync(`
+    DELETE FROM exercises;
+    DELETE FROM hangboarding;
+    DELETE FROM timer_presets;
+    DELETE FROM videos;
+    DELETE FROM workouts;
+  `);
+
+  // --- Exercises (~6) ---
+  const exercises: Array<[string, number, number, number | null, string | null, string]> = [
+    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:null}]), today],
+    ["Campus Board", 3, 5, null, JSON.stringify([{reps:5,weight:null},{reps:5,weight:null},{reps:4,weight:null}]), today],
+    ["Deadlifts", 3, 5, 225, JSON.stringify([{reps:5,weight:225},{reps:5,weight:225},{reps:5,weight:225}]), yesterday],
+    ["Finger Curls", 3, 12, 35, JSON.stringify([{reps:12,weight:35},{reps:12,weight:35},{reps:10,weight:35}]), yesterday],
+    ["Weighted Pull-ups", 5, 5, 45, JSON.stringify([{reps:5,weight:45},{reps:5,weight:45},{reps:4,weight:45},{reps:4,weight:45},{reps:3,weight:45}]), threeDaysAgo],
+    ["Push-ups", 3, 20, null, JSON.stringify([{reps:20,weight:null},{reps:18,weight:null},{reps:15,weight:null}]), weekAgo],
+  ];
+  for (const [name, sets, reps, weight, setsData, createdAt] of exercises) {
+    await db.runAsync(
+      `INSERT INTO exercises (name, sets, reps, weight_lbs, sets_data, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      [name, sets, reps, weight, setsData, createdAt]
+    );
+  }
+
+  // --- Hangboarding (~4) ---
+  const hangSessions: Array<[string, number, number, number, number, number, number | null, number | null, number, string]> = [
+    ["Max Hangs",     3, 1, 10, 0,  180, 25,   20, 630,  todayAfternoon],
+    ["Repeaters",     4, 6,  7, 3,  120, null,  18, 720,  yesterday],
+    ["Min Edge",      3, 3, 10, 5,  180, null,  14, 585,  threeDaysAgo],
+    ["Max Hangs",     4, 1, 10, 0,  180, 30,    20, 840,  weekAgo],
+  ];
+  for (const [presetName, sets, reps, workTime, repRest, setRest, weight, edge, duration, completedAt] of hangSessions) {
+    await db.runAsync(
+      `INSERT INTO hangboarding (preset_name, sets, reps, work_time, rep_rest, set_rest, weight_lbs, edge_mm, duration_seconds, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [presetName, sets, reps, workTime, repRest, setRest, weight, edge, duration, completedAt]
+    );
+  }
+
+  // --- Timer Presets (~3) ---
+  const presets: Array<[string, number, number, number, number, number, number | null, number | null]> = [
+    ["Max Hangs",  3, 1, 10, 0,  180, 25,   20],
+    ["Repeaters",  4, 6,  7, 3,  120, null,  18],
+    ["Min Edge",   3, 3, 10, 5,  180, null,  14],
+  ];
+  for (const [name, sets, reps, workTime, repRest, setRest, weight, edge] of presets) {
+    await db.runAsync(
+      `INSERT INTO timer_presets (name, sets, reps, work_time, rep_rest, set_rest, weight_lbs, edge_mm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, sets, reps, workTime, repRest, setRest, weight, edge]
+    );
+  }
+
+  // --- Videos (~4) ---
+  const videos: Array<[string, string, number, string]> = [
+    ["file:///placeholder/moonboard_v5.mp4",   "moonboard_v5.mp4",   47, todayAfternoon],
+    ["file:///placeholder/outdoor_lead.mp4",    "outdoor_lead.mp4",   183, yesterday],
+    ["file:///placeholder/campus_session.mp4",  "campus_session.mp4", 92,  threeDaysAgo],
+    ["file:///placeholder/proj_send.mp4",       "proj_send.mp4",      64,  weekAgo],
+  ];
+  for (const [uri, filename, duration, recordedAt] of videos) {
+    await db.runAsync(
+      `INSERT INTO videos (uri, filename, duration_seconds, recorded_at) VALUES (?, ?, ?, ?)`,
+      [uri, filename, duration, recordedAt]
+    );
+  }
+
+  // --- Workouts (~2) ---
+  const workouts: Array<[string, string[]]> = [
+    ["Upper Body Pull", ["Pull-ups", "Weighted Pull-ups", "Finger Curls"]],
+    ["Power Day",       ["Campus Board", "Deadlifts", "Push-ups"]],
+  ];
+  for (const [name, exercisesList] of workouts) {
+    await db.runAsync(
+      `INSERT INTO workouts (name, exercises) VALUES (?, ?)`,
+      [name, JSON.stringify(exercisesList)]
+    );
+  }
+}

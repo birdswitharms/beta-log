@@ -3,6 +3,8 @@ import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { usePreferencesStore } from "../../store/usePreferencesStore";
+import { seedDatabase } from "../../db/database";
+import { showAlert } from "../../components/CustomAlert";
 
 function SettingsModal({
   visible,
@@ -59,6 +61,22 @@ function SettingsModal({
               </Text>
             </Pressable>
           </View>
+
+          {__DEV__ && (
+            <>
+              <Text style={modalStyles.sectionLabel}>Developer</Text>
+              <Pressable
+                style={modalStyles.seedButton}
+                onPress={async () => {
+                  await seedDatabase();
+                  onClose();
+                  showAlert({ title: "Database seeded!", message: "Sample data has been inserted." });
+                }}
+              >
+                <Text style={modalStyles.seedButtonText}>Seed Database</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -208,5 +226,17 @@ const modalStyles = StyleSheet.create({
   },
   toggleTextActive: {
     color: "#FFFFFF",
+  },
+  seedButton: {
+    marginHorizontal: 20,
+    backgroundColor: "#2C2C2E",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  seedButtonText: {
+    color: "#FF6B35",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
