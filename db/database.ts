@@ -313,11 +313,13 @@ export async function seedDatabase(): Promise<void> {
     return d.toISOString().replace("T", " ").slice(0, 19);
   };
 
-  const today = daysAgo(0, 10);
-  const todayAfternoon = daysAgo(0, 14);
-  const yesterday = daysAgo(1, 9);
-  const threeDaysAgo = daysAgo(3, 11);
-  const weekAgo = daysAgo(7, 16);
+  const day0 = daysAgo(0, 10);   // today
+  const day1 = daysAgo(1, 9);   // yesterday
+  const day2 = daysAgo(2, 10);
+  const day3 = daysAgo(3, 11);
+  const day4 = daysAgo(4, 9);
+  const day5 = daysAgo(5, 10);
+  const day6 = daysAgo(6, 11);
 
   // Clear all tables except settings
   await db.execAsync(`
@@ -328,18 +330,44 @@ export async function seedDatabase(): Promise<void> {
     DELETE FROM workouts;
   `);
 
-  // --- Exercises (~6) ---
+  // --- Exercises (full week) ---
   const exercises: Array<[string, number, number, number | null, string | null, string]> = [
-    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:4,weight:null},{reps:6,weight:45}]), today],
-    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:15}]), yesterday],
-    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:null}]), threeDaysAgo],
-    ["Campus Board", 3, 5, null, JSON.stringify([{reps:5,weight:null},{reps:5,weight:null},{reps:4,weight:null}]), today],
-    ["Deadlifts", 3, 5, 225, JSON.stringify([{reps:7,weight:225},{reps:6,weight:225},{reps:5,weight:225}]), yesterday],
-    ["Deadlifts", 3, 5, 225, JSON.stringify([{reps:3,weight:225},{reps:2,weight:225},{reps:1,weight:315}]), today],
-    ["Deadlifts", 3, 5, 225, JSON.stringify([{reps:10,weight:135},{reps:10,weight:135},{reps:10,weight:135}]), threeDaysAgo],
-    ["Finger Curls", 3, 12, 35, JSON.stringify([{reps:12,weight:35},{reps:12,weight:35},{reps:10,weight:35}]), yesterday],
-    ["Weighted Pull-ups", 5, 5, 45, JSON.stringify([{reps:5,weight:45},{reps:5,weight:45},{reps:4,weight:45},{reps:4,weight:45},{reps:3,weight:45}]), threeDaysAgo],
-    ["Push-ups", 3, 20, null, JSON.stringify([{reps:20,weight:null},{reps:18,weight:null},{reps:15,weight:null}]), weekAgo],
+    // Pull-ups — every day, progressive weighted set
+    ["Pull-ups", 5, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:6,weight:null},{reps:5,weight:25},{reps:4,weight:45}]), day0],
+    ["Pull-ups", 5, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:5,weight:25},{reps:3,weight:35}]), day1],
+    ["Pull-ups", 5, 8, null, JSON.stringify([{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:null},{reps:5,weight:15},{reps:3,weight:25}]), day2],
+    ["Pull-ups", 5, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:null},{reps:4,weight:15}]), day3],
+    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:null}]), day4],
+    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:null},{reps:5,weight:null}]), day5],
+    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:7,weight:null},{reps:6,weight:null},{reps:5,weight:null},{reps:5,weight:null}]), day6],
+
+    // Deadlifts — 4 days, ramping weight
+    ["Deadlifts", 5, 5, 315, JSON.stringify([{reps:5,weight:135},{reps:5,weight:185},{reps:3,weight:225},{reps:2,weight:275},{reps:1,weight:315}]), day0],
+    ["Deadlifts", 5, 5, 275, JSON.stringify([{reps:5,weight:135},{reps:5,weight:185},{reps:5,weight:225},{reps:3,weight:275},{reps:2,weight:275}]), day2],
+    ["Deadlifts", 5, 5, 245, JSON.stringify([{reps:5,weight:135},{reps:5,weight:185},{reps:4,weight:225},{reps:3,weight:245},{reps:2,weight:245}]), day4],
+    ["Deadlifts", 4, 5, 225, JSON.stringify([{reps:5,weight:135},{reps:5,weight:185},{reps:5,weight:225},{reps:5,weight:225}]), day6],
+
+    // Campus Board — 3 days
+    ["Campus Board", 4, 5, null, JSON.stringify([{reps:5,weight:null},{reps:5,weight:null},{reps:4,weight:null},{reps:3,weight:null}]), day0],
+    ["Campus Board", 4, 5, null, JSON.stringify([{reps:5,weight:null},{reps:4,weight:null},{reps:4,weight:null},{reps:3,weight:null}]), day3],
+    ["Campus Board", 3, 5, null, JSON.stringify([{reps:5,weight:null},{reps:4,weight:null},{reps:3,weight:null}]), day5],
+
+    // Finger Curls — 4 days, increasing weight
+    ["Finger Curls", 4, 12, 45, JSON.stringify([{reps:12,weight:45},{reps:10,weight:45},{reps:10,weight:45},{reps:8,weight:45}]), day0],
+    ["Finger Curls", 4, 12, 40, JSON.stringify([{reps:12,weight:40},{reps:12,weight:40},{reps:10,weight:40},{reps:10,weight:40}]), day1],
+    ["Finger Curls", 4, 12, 40, JSON.stringify([{reps:12,weight:35},{reps:12,weight:35},{reps:12,weight:40},{reps:10,weight:40}]), day3],
+    ["Finger Curls", 3, 12, 35, JSON.stringify([{reps:12,weight:35},{reps:12,weight:35},{reps:10,weight:35}]), day5],
+
+    // Weighted Pull-ups — 3 days
+    ["Weighted Pull-ups", 5, 5, 55, JSON.stringify([{reps:5,weight:45},{reps:5,weight:45},{reps:4,weight:50},{reps:3,weight:55},{reps:2,weight:55}]), day1],
+    ["Weighted Pull-ups", 5, 5, 50, JSON.stringify([{reps:5,weight:45},{reps:5,weight:45},{reps:4,weight:50},{reps:3,weight:50},{reps:3,weight:50}]), day4],
+    ["Weighted Pull-ups", 5, 5, 45, JSON.stringify([{reps:5,weight:45},{reps:5,weight:45},{reps:4,weight:45},{reps:4,weight:45},{reps:3,weight:45}]), day6],
+
+    // Push-ups — 4 days, increasing reps
+    ["Push-ups", 4, 20, null, JSON.stringify([{reps:25,weight:null},{reps:22,weight:null},{reps:20,weight:null},{reps:18,weight:null}]), day0],
+    ["Push-ups", 4, 20, null, JSON.stringify([{reps:22,weight:null},{reps:20,weight:null},{reps:18,weight:null},{reps:15,weight:null}]), day2],
+    ["Push-ups", 3, 20, null, JSON.stringify([{reps:20,weight:null},{reps:18,weight:null},{reps:15,weight:null}]), day4],
+    ["Push-ups", 3, 20, null, JSON.stringify([{reps:20,weight:null},{reps:15,weight:null},{reps:15,weight:null}]), day6],
   ];
   for (const [name, sets, reps, weight, setsData, createdAt] of exercises) {
     await db.runAsync(
@@ -348,12 +376,20 @@ export async function seedDatabase(): Promise<void> {
     );
   }
 
-  // --- Hangboarding (~4) ---
+  // --- Hangboarding (full week) ---
   const hangSessions: Array<[string, number, number, number, number, number, number | null, number | null, number, string]> = [
-    ["Max Hangs",     3, 1, 10, 0,  180, 25,   20, 630,  todayAfternoon],
-    ["Repeaters",     4, 6,  7, 3,  120, null,  18, 720,  yesterday],
-    ["Min Edge",      3, 3, 10, 5,  180, null,  14, 585,  threeDaysAgo],
-    ["Max Hangs",     4, 1, 10, 0,  180, 30,    20, 840,  weekAgo],
+    ["Max Hangs",     3, 1, 10, 0,  180, 30,   20, 630,  daysAgo(0, 14)],
+    ["Max Hangs",     3, 1, 10, 0,  180, 28,   20, 630,  daysAgo(1, 14)],
+    ["Max Hangs",     3, 1, 10, 0,  180, 25,   20, 630,  daysAgo(3, 14)],
+    ["Max Hangs",     3, 1, 10, 0,  180, 22,   20, 630,  daysAgo(5, 14)],
+    ["Max Hangs",     4, 1, 10, 0,  180, 20,   20, 840,  daysAgo(6, 14)],
+    ["Repeaters",     4, 6,  7, 3,  120, null,  18, 720,  daysAgo(0, 16)],
+    ["Repeaters",     4, 6,  7, 3,  120, null,  18, 720,  daysAgo(2, 16)],
+    ["Repeaters",     4, 6,  7, 3,  120, null,  20, 720,  daysAgo(4, 16)],
+    ["Repeaters",     4, 6,  7, 3,  120, null,  20, 720,  daysAgo(6, 16)],
+    ["Min Edge",      3, 3, 10, 5,  180, null,  12, 585,  daysAgo(1, 11)],
+    ["Min Edge",      3, 3, 10, 5,  180, null,  14, 585,  daysAgo(3, 11)],
+    ["Min Edge",      3, 3, 10, 5,  180, null,  16, 585,  daysAgo(5, 11)],
   ];
   for (const [presetName, sets, reps, workTime, repRest, setRest, weight, edge, duration, completedAt] of hangSessions) {
     await db.runAsync(
@@ -377,10 +413,10 @@ export async function seedDatabase(): Promise<void> {
 
   // --- Videos (~4) ---
   const videos: Array<[string, string, number, string]> = [
-    ["file:///placeholder/moonboard_v5.mp4",   "moonboard_v5.mp4",   47, todayAfternoon],
-    ["file:///placeholder/outdoor_lead.mp4",    "outdoor_lead.mp4",   183, yesterday],
-    ["file:///placeholder/campus_session.mp4",  "campus_session.mp4", 92,  threeDaysAgo],
-    ["file:///placeholder/proj_send.mp4",       "proj_send.mp4",      64,  weekAgo],
+    ["file:///placeholder/moonboard_v5.mp4",   "moonboard_v5.mp4",   47, day0],
+    ["file:///placeholder/outdoor_lead.mp4",    "outdoor_lead.mp4",   183, day1],
+    ["file:///placeholder/campus_session.mp4",  "campus_session.mp4", 92,  day3],
+    ["file:///placeholder/proj_send.mp4",       "proj_send.mp4",      64,  day6],
   ];
   for (const [uri, filename, duration, recordedAt] of videos) {
     await db.runAsync(

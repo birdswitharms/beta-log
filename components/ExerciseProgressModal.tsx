@@ -22,16 +22,9 @@ interface Props {
   exerciseName: string;
 }
 
-type Metric = "weight" | "reps";
-
-const METRIC_COLORS: Record<Metric, string> = {
+const COLORS = {
   weight: "#FF6B35",
   reps: "#5AC8FA",
-};
-
-const METRIC_LABELS: Record<Metric, string> = {
-  weight: "Weight",
-  reps: "Reps",
 };
 
 export default function ExerciseProgressModal({
@@ -44,21 +37,6 @@ export default function ExerciseProgressModal({
   const [labels, setLabels] = useState<string[]>([]);
   const [weightData, setWeightData] = useState<number[]>([]);
   const [repsData, setRepsData] = useState<number[]>([]);
-  const [activeMetrics, setActiveMetrics] = useState<Set<Metric>>(
-    new Set(["weight", "reps"])
-  );
-
-  const toggleMetric = (m: Metric) => {
-    setActiveMetrics((prev) => {
-      const next = new Set(prev);
-      if (next.has(m)) {
-        if (next.size > 1) next.delete(m);
-      } else {
-        next.add(m);
-      }
-      return next;
-    });
-  };
 
   useEffect(() => {
     if (!visible) return;
@@ -89,11 +67,9 @@ export default function ExerciseProgressModal({
           totalReps = ex.reps;
         }
 
-        // Max weight per date
         const existingWeight = weightByDate.get(date) ?? 0;
         if (maxWeight > existingWeight) weightByDate.set(date, maxWeight);
 
-        // Sum reps per date
         repsByDate.set(date, (repsByDate.get(date) ?? 0) + totalReps);
       }
 
@@ -118,32 +94,24 @@ export default function ExerciseProgressModal({
   }, [visible, exerciseName, weightUnit]);
 
   const screenWidth = Dimensions.get("window").width;
-
-  const datasets: { data: number[]; color: () => string; strokeWidth: number }[] = [];
-  if (activeMetrics.has("weight") && weightData.length > 0) {
-    datasets.push({
-      data: weightData,
-      color: () => METRIC_COLORS.weight,
-      strokeWidth: 2,
-    });
-  }
-  if (activeMetrics.has("reps") && repsData.length > 0) {
-    datasets.push({
-      data: repsData,
-      color: () => METRIC_COLORS.reps,
-      strokeWidth: 2,
-    });
-  }
-
-  // Y-axis suffix only when a single metric is active
-  let yAxisSuffix = "";
-  if (activeMetrics.size === 1) {
-    const solo = Array.from(activeMetrics)[0];
-    if (solo === "weight") yAxisSuffix = ` ${weightUnit}`;
-    else yAxisSuffix = " reps";
-  }
-
   const hasEnoughData = weightData.length >= 2;
+
+  const makeChartConfig = (color: string) => ({
+    backgroundColor: "#1C1C1E",
+    backgroundGradientFrom: "#1C1C1E",
+    backgroundGradientTo: "#1C1C1E",
+    decimalPlaces: 0,
+    color: () => color,
+    labelColor: () => "#8E8E93",
+    propsForDots: {
+      r: "3",
+      strokeWidth: "1",
+      stroke: color,
+    },
+    propsForBackgroundLines: {
+      stroke: "#2C2C2E",
+    },
+  });
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -170,78 +138,32 @@ export default function ExerciseProgressModal({
               </Text>
             ) : (
               <>
-                <View style={styles.pillRow}>
-                  {(["weight", "reps"] as Metric[]).map((m) => (
-                    <Pressable
-                      key={m}
-                      onPress={() => toggleMetric(m)}
-                      style={[
-                        styles.pill,
-                        activeMetrics.has(m) && {
-                          backgroundColor: METRIC_COLORS[m],
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.pillText,
-                          activeMetrics.has(m) && styles.pillTextActive,
-                        ]}
-                      >
-                        {METRIC_LABELS[m]}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-
-                {datasets.length > 0 && (
-                  <LineChart
-                    data={{
-                      labels,
-                      datasets,
-                    }}
-                    width={screenWidth}
-                    height={300}
-                    yAxisSuffix={yAxisSuffix}
-                    chartConfig={{
-                      backgroundColor: "#1C1C1E",
-                      backgroundGradientFrom: "#1C1C1E",
-                      backgroundGradientTo: "#1C1C1E",
-                      decimalPlaces: 0,
-                      color: () => "#FF6B35",
-                      labelColor: () => "#8E8E93",
-                      propsForDots: {
-                        r: "3",
-                        strokeWidth: "1",
-                      },
-                      propsForBackgroundLines: {
-                        stroke: "#2C2C2E",
-                      },
-                    }}
-                    bezier
-                    style={styles.chart}
-                    withDots={activeMetrics.size === 1}
-                  />
-                )}
-
-                <View style={styles.legend}>
-                  {(["weight", "reps"] as Metric[]).map(
-                    (m) =>
-                      activeMetrics.has(m) && (
-                        <View key={m} style={styles.legendItem}>
-                          <View
-                            style={[
-                              styles.legendDot,
-                              { backgroundColor: METRIC_COLORS[m] },
-                            ]}
-                          />
-                          <Text style={styles.legendText}>
-                            {METRIC_LABELS[m]}
-                          </Text>
-                        </View>
-                      )
-                  )}
-                </View>
+                <LineChart
+                  data={{
+                    labels: labels.map(() => ""),
+                    datasets: [{ data: weightData, color: () => COLORS.weight, strokeWidth: 2 }],
+                  }}
+                  width={screenWidth}
+                  height={150}
+                  yAxisSuffix={` ${weightUnit}`}
+                  chartConfig={makeChartConfig(COLORS.weight)}
+                  bezier
+                  style={styles.chart}
+                  withDots
+                />
+                <LineChart
+                  data={{
+                    labels,
+                    datasets: [{ data: repsData, color: () => COLORS.reps, strokeWidth: 2 }],
+                  }}
+                  width={screenWidth}
+                  height={170}
+                  yAxisSuffix=" reps"
+                  chartConfig={makeChartConfig(COLORS.reps)}
+                  bezier
+                  style={styles.chart}
+                  withDots
+                />
               </>
             )}
           </View>
@@ -278,7 +200,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: "row",
@@ -295,8 +217,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   body: {
-    paddingVertical: 20,
-    minHeight: 380,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   centered: {
     marginTop: 80,
@@ -309,47 +231,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     lineHeight: 22,
   },
-  pillRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-    marginHorizontal: 20,
-  },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#2C2C2E",
-  },
-  pillText: {
-    color: "#8E8E93",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  pillTextActive: {
-    color: "#FFFFFF",
-  },
   chart: {
     borderRadius: 12,
   },
-  legend: {
-    flexDirection: "row",
-    gap: 16,
-    marginTop: 12,
-    justifyContent: "center",
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
+  chartLabel: {
     color: "#8E8E93",
     fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 20,
+    marginBottom: 4,
+    marginTop: 8,
   },
 });
