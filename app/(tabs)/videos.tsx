@@ -15,9 +15,11 @@ import { showAlert } from "../../components/CustomAlert";
 import VideoCard from "../../components/VideoCard";
 import { Video } from "../../types";
 
+const NUM_COLUMNS = 3;
+
 interface VideoSection {
   title: string;
-  data: Video[];
+  data: Video[][];
 }
 
 function formatDateHeader(dateStr: string): string {
@@ -29,6 +31,14 @@ function formatDateHeader(dateStr: string): string {
     month: "long",
     day: "numeric",
   });
+}
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
 }
 
 function groupVideosByDate(videos: Video[]): VideoSection[] {
@@ -43,7 +53,7 @@ function groupVideosByDate(videos: Video[]): VideoSection[] {
     .sort((a, b) => b.localeCompare(a))
     .map((dateKey) => ({
       title: formatDateHeader(dateKey),
-      data: groups[dateKey],
+      data: chunkArray(groups[dateKey], NUM_COLUMNS),
     }));
 }
 
@@ -121,9 +131,17 @@ export default function VideosScreen() {
         <>
           <SectionList
             sections={sections}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <VideoCard video={item} onDelete={handleDelete} />
+            keyExtractor={(item) => item.map((v) => v.id).join("-")}
+            renderItem={({ item: row }) => (
+              <View style={styles.row}>
+                {row.map((video) => (
+                  <VideoCard key={video.id} video={video} onDelete={handleDelete} />
+                ))}
+                {row.length < NUM_COLUMNS &&
+                  Array.from({ length: NUM_COLUMNS - row.length }).map((_, i) => (
+                    <View key={`spacer-${i}`} style={styles.spacer} />
+                  ))}
+              </View>
             )}
             renderSectionHeader={({ section: { title } }) => (
               <Text style={styles.sectionHeader}>{title}</Text>
@@ -227,16 +245,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  row: {
+    flexDirection: "row",
+  },
+  spacer: {
+    flex: 1,
+    margin: 1.5,
+  },
   sectionHeader: {
     color: "#AEAEB2",
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: 8,
-    marginTop: 16,
+    marginBottom: 4,
+    marginTop: 12,
+    paddingHorizontal: 2,
   },
   list: {
-    padding: 16,
-    paddingTop: 8,
+    padding: 2,
     paddingBottom: 100,
   },
   fab: {

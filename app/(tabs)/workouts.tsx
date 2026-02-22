@@ -127,48 +127,56 @@ export default function WorkoutsScreen() {
           </View>
         </View>
       ) : (
-        <>
-          <Pressable
-            style={styles.createButton}
-            onPress={() => setCreating(true)}
-          >
-            <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.createText}>Create Workout</Text>
-          </Pressable>
-
-          <FlatList
-            data={workouts}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.workoutRow}
-                onPress={() => router.push(`/workout/${item.id}`)}
-              >
-                <View style={styles.workoutInfo}>
-                  <Text style={styles.workoutName}>{item.name}</Text>
-                  <Text style={styles.workoutCount}>
-                    {item.exercises.length}{" "}
-                    {item.exercises.length === 1 ? "exercise" : "exercises"}
-                  </Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color="#636366"
-                />
-              </Pressable>
-            )}
-            contentContainerStyle={styles.list}
-            ListEmptyComponent={
-              <View style={styles.center}>
-                <Text style={styles.emptyText}>No workouts yet.</Text>
-                <Text style={styles.emptySubtext}>
-                  Create a workout to get started!
+        <FlatList
+          data={workouts}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <Pressable
+              style={styles.workoutRow}
+              onPress={() => router.push(`/workout/${item.id}`)}
+            >
+              <View style={styles.workoutInfo}>
+                <Text style={styles.workoutName}>{item.name}</Text>
+                <Text style={styles.workoutCount}>
+                  {item.exercises.length}{" "}
+                  {item.exercises.length === 1 ? "exercise" : "exercises"}
                 </Text>
               </View>
-            }
-          />
-        </>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#636366"
+              />
+            </Pressable>
+          )}
+          contentContainerStyle={workouts.length === 0 ? styles.emptyList : styles.list}
+          ListHeaderComponent={
+            workouts.length > 0 ? (
+              <Pressable
+                style={styles.createButton}
+                onPress={() => setCreating(true)}
+              >
+                <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.createText}>Create Workout</Text>
+              </Pressable>
+            ) : null
+          }
+          ListEmptyComponent={
+            <View style={styles.center}>
+              <Text style={styles.emptyText}>No workouts yet.</Text>
+              <Text style={styles.emptySubtext}>
+                Create a workout to get started!
+              </Text>
+              <Pressable
+                style={styles.emptyCreateButton}
+                onPress={() => setCreating(true)}
+              >
+                <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.createText}>Create Workout</Text>
+              </Pressable>
+            </View>
+          }
+        />
       )}
     </View>
   );
@@ -192,8 +200,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF6B35",
     borderRadius: 12,
     padding: 14,
-    margin: 16,
     marginBottom: 8,
+  },
+  emptyCreateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#FF6B35",
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 24,
+    width: "100%",
   },
   createText: {
     color: "#FFFFFF",
@@ -226,18 +244,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
+  emptyList: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: 16,
+  },
   emptyText: {
     color: "#AEAEB2",
     fontSize: 17,
     fontWeight: "600",
-    marginTop: 60,
   },
   emptySubtext: {
     color: "#636366",
     fontSize: 15,
     marginTop: 8,
     textAlign: "center",
-    paddingHorizontal: 40,
   },
   form: {
     padding: 20,
