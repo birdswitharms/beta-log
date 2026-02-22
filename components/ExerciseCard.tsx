@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Exercise } from "../types";
 import { usePreferencesStore, formatWeight } from "../store/usePreferencesStore";
+import ExerciseProgressModal from "./ExerciseProgressModal";
 
 interface Props {
   exercise: Exercise;
@@ -10,11 +12,20 @@ interface Props {
 
 export default function ExerciseCard({ exercise, onDelete }: Props) {
   const weightUnit = usePreferencesStore((s) => s.weightUnit);
+  const [progressVisible, setProgressVisible] = useState(false);
 
   return (
+    <>
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.name}>{exercise.name}</Text>
+        <Pressable
+          onPress={() => setProgressVisible(true)}
+          hitSlop={8}
+          style={styles.graphButton}
+        >
+          <Ionicons name="trending-up" size={18} color="#FF6B35" />
+        </Pressable>
         <Pressable
           onPress={() => onDelete(exercise.id)}
           hitSlop={8}
@@ -51,6 +62,12 @@ export default function ExerciseCard({ exercise, onDelete }: Props) {
         </>
       )}
     </View>
+    <ExerciseProgressModal
+      visible={progressVisible}
+      onClose={() => setProgressVisible(false)}
+      exerciseName={exercise.name}
+    />
+    </>
   );
 }
 
@@ -71,6 +88,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     flex: 1,
+  },
+  graphButton: {
+    padding: 4,
+    marginRight: 8,
   },
   deleteButton: {
     padding: 4,

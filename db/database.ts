@@ -123,6 +123,15 @@ export async function getExercises(): Promise<Exercise[]> {
   return rows.map(parseExerciseRow);
 }
 
+export async function getExercisesByName(name: string): Promise<Exercise[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<ExerciseRow>(
+    `SELECT * FROM exercises WHERE LOWER(name) = LOWER(?) ORDER BY created_at ASC`,
+    [name]
+  );
+  return rows.map(parseExerciseRow);
+}
+
 export async function deleteExercise(id: number): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(`DELETE FROM exercises WHERE id = ?`, [id]);
@@ -172,6 +181,14 @@ export async function getHangboarding(): Promise<Hangboarding[]> {
   const db = await getDatabase();
   return db.getAllAsync<Hangboarding>(
     `SELECT * FROM hangboarding ORDER BY completed_at DESC`
+  );
+}
+
+export async function getHangboardingByPresetName(presetName: string): Promise<Hangboarding[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<Hangboarding>(
+    `SELECT * FROM hangboarding WHERE LOWER(preset_name) = LOWER(?) ORDER BY completed_at ASC`,
+    [presetName]
   );
 }
 
@@ -313,9 +330,13 @@ export async function seedDatabase(): Promise<void> {
 
   // --- Exercises (~6) ---
   const exercises: Array<[string, number, number, number | null, string | null, string]> = [
-    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:null}]), today],
+    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:4,weight:null},{reps:6,weight:45}]), today],
+    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:15}]), yesterday],
+    ["Pull-ups", 4, 8, null, JSON.stringify([{reps:8,weight:null},{reps:8,weight:null},{reps:7,weight:null},{reps:6,weight:null}]), threeDaysAgo],
     ["Campus Board", 3, 5, null, JSON.stringify([{reps:5,weight:null},{reps:5,weight:null},{reps:4,weight:null}]), today],
-    ["Deadlifts", 3, 5, 225, JSON.stringify([{reps:5,weight:225},{reps:5,weight:225},{reps:5,weight:225}]), yesterday],
+    ["Deadlifts", 3, 5, 225, JSON.stringify([{reps:7,weight:225},{reps:6,weight:225},{reps:5,weight:225}]), yesterday],
+    ["Deadlifts", 3, 5, 225, JSON.stringify([{reps:3,weight:225},{reps:2,weight:225},{reps:1,weight:315}]), today],
+    ["Deadlifts", 3, 5, 225, JSON.stringify([{reps:10,weight:135},{reps:10,weight:135},{reps:10,weight:135}]), threeDaysAgo],
     ["Finger Curls", 3, 12, 35, JSON.stringify([{reps:12,weight:35},{reps:12,weight:35},{reps:10,weight:35}]), yesterday],
     ["Weighted Pull-ups", 5, 5, 45, JSON.stringify([{reps:5,weight:45},{reps:5,weight:45},{reps:4,weight:45},{reps:4,weight:45},{reps:3,weight:45}]), threeDaysAgo],
     ["Push-ups", 3, 20, null, JSON.stringify([{reps:20,weight:null},{reps:18,weight:null},{reps:15,weight:null}]), weekAgo],

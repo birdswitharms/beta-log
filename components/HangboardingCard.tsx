@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Hangboarding } from "../types";
 import { usePreferencesStore, formatWeight } from "../store/usePreferencesStore";
+import HangboardingProgressModal from "./HangboardingProgressModal";
 
 interface Props {
   hangboarding: Hangboarding;
@@ -17,6 +19,8 @@ function formatDuration(seconds: number): string {
 
 export default function HangboardingCard({ hangboarding, onDelete }: Props) {
   const weightUnit = usePreferencesStore((s) => s.weightUnit);
+  const [progressVisible, setProgressVisible] = useState(false);
+  const isPreset = hangboarding.preset_name !== "Custom";
   const date = new Date(hangboarding.completed_at);
   const formattedDate = date.toLocaleDateString(undefined, {
     month: "short",
@@ -26,9 +30,19 @@ export default function HangboardingCard({ hangboarding, onDelete }: Props) {
   });
 
   return (
+    <>
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.name}>{hangboarding.preset_name}</Text>
+        {isPreset && (
+          <Pressable
+            onPress={() => setProgressVisible(true)}
+            hitSlop={8}
+            style={styles.graphButton}
+          >
+            <Ionicons name="trending-up" size={18} color="#FF6B35" />
+          </Pressable>
+        )}
         <Pressable
           onPress={() => onDelete(hangboarding.id)}
           hitSlop={8}
@@ -65,6 +79,14 @@ export default function HangboardingCard({ hangboarding, onDelete }: Props) {
         </Text>
       )}
     </View>
+    {isPreset && (
+      <HangboardingProgressModal
+        visible={progressVisible}
+        onClose={() => setProgressVisible(false)}
+        presetName={hangboarding.preset_name}
+      />
+    )}
+    </>
   );
 }
 
@@ -85,6 +107,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     flex: 1,
+  },
+  graphButton: {
+    padding: 4,
+    marginRight: 8,
   },
   deleteButton: {
     padding: 4,
