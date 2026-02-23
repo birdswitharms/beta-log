@@ -28,7 +28,6 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
   const weightUnit = usePreferencesStore((s) => s.weightUnit);
   const [name, setName] = useState(initialName ?? "");
   const [reps, setReps] = useState("");
-  const [weightEnabled, setWeightEnabled] = useState(true);
   const [weight, setWeight] = useState("");
   const [loggedSets, setLoggedSets] = useState<LoggedSet[]>([]);
 
@@ -42,7 +41,7 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
       ...prev,
       {
         reps: repCount,
-        weight: weightEnabled ? (parseFloat(weight) || 0) : null,
+        weight: weight.trim() ? (parseFloat(weight) || 0) : null,
       },
     ]);
   };
@@ -110,31 +109,15 @@ export default function ExerciseForm({ onSaved, initialName }: Props) {
           keyboardType="number-pad"
         />
 
-        <Pressable
-          style={styles.checkboxRow}
-          onPress={() => setWeightEnabled(!weightEnabled)}
-        >
-          <Ionicons
-            name={weightEnabled ? "checkbox" : "square-outline"}
-            size={22}
-            color={weightEnabled ? "#FF6B35" : "#636366"}
-          />
-          <Text style={styles.checkboxLabel}>{`Add weight (${weightUnit})`}</Text>
-        </Pressable>
-
-        {weightEnabled && (
-          <>
-            <Text style={styles.label}>{`Weight (${weightUnit})`}</Text>
-            <TextInput
-              style={styles.input}
-              value={weight}
-              onChangeText={setWeight}
-              placeholder="0"
-              placeholderTextColor="#636366"
-              keyboardType="decimal-pad"
-            />
-          </>
-        )}
+        <Text style={styles.label}>{`Weight (${weightUnit})`}</Text>
+        <TextInput
+          style={styles.input}
+          value={weight}
+          onChangeText={setWeight}
+          placeholder="Optional"
+          placeholderTextColor="#636366"
+          keyboardType="decimal-pad"
+        />
 
         <Pressable style={styles.logSetButton} onPress={handleLogSet}>
           <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
@@ -196,18 +179,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 14,
     fontSize: 16,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 20,
-    marginBottom: 4,
-  },
-  checkboxLabel: {
-    color: "#AEAEB2",
-    fontSize: 15,
-    fontWeight: "600",
   },
   logSetButton: {
     flexDirection: "row",
