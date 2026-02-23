@@ -7,6 +7,7 @@ import { Video } from "../types";
 interface Props {
   video: Video;
   onDelete: (id: number) => void;
+  onPress: (video: Video) => void;
 }
 
 function formatDuration(seconds: number): string {
@@ -15,7 +16,7 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-export default function VideoCard({ video, onDelete }: Props) {
+export default function VideoCard({ video, onDelete, onPress }: Props) {
   const [thumbnail, setThumbnail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function VideoCard({ video, onDelete }: Props) {
   return (
     <Pressable
       style={styles.card}
+      onPress={() => onPress(video)}
       onLongPress={() => onDelete(video.id)}
     >
       {thumbnail ? (

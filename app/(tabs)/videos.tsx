@@ -15,6 +15,7 @@ import * as MediaLibrary from "expo-media-library";
 import { getVideos, deleteVideo, addVideo, addVideoWithDate } from "../../db/database";
 import { showAlert } from "../../components/CustomAlert";
 import VideoCard from "../../components/VideoCard";
+import VideoPlayerModal from "../../components/VideoPlayerModal";
 import { Video } from "../../types";
 
 const NUM_COLUMNS = 3;
@@ -66,6 +67,7 @@ export default function VideosScreen() {
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [timerModalVisible, setTimerModalVisible] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   const loadVideos = useCallback(async () => {
     setLoading(true);
@@ -188,7 +190,7 @@ export default function VideosScreen() {
             renderItem={({ item: row }) => (
               <View style={styles.row}>
                 {row.map((video) => (
-                  <VideoCard key={video.id} video={video} onDelete={handleDelete} />
+                  <VideoCard key={video.id} video={video} onDelete={handleDelete} onPress={setSelectedVideo} />
                 ))}
                 {row.length < NUM_COLUMNS &&
                   Array.from({ length: NUM_COLUMNS - row.length }).map((_, i) => (
@@ -211,6 +213,11 @@ export default function VideosScreen() {
           </View>
         </>
       )}
+
+      <VideoPlayerModal
+        video={selectedVideo}
+        onClose={() => setSelectedVideo(null)}
+      />
 
       {/* Timer Selection Modal */}
       <Modal
