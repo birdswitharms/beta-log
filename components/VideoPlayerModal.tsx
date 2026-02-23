@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useEventListener } from "expo";
 import Slider from "@react-native-community/slider";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Video } from "../types";
 
@@ -55,15 +56,21 @@ export default function VideoPlayerModal({ video, onClose }: Props) {
     setIsPlaying(event.isPlaying);
   });
 
+  // Reset to start when playback finishes
+  useEventListener(player, "playToEnd", () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    player.currentTime = 0;
+  });
+
   // Poll currentTime while playing
   useEffect(() => {
     if (isPlaying && !isScrubbing) {
       pollRef.current = setInterval(() => {
         setCurrentTime(player.currentTime);
-        // Update duration if it wasn't available initially
-        if (player.duration > 0 && duration === 0) {
-          setDuration(player.duration);
-        }
+        setDuration((prev) =>
+          prev === 0 && player.duration > 0 ? player.duration : prev
+        );
       }, 250);
     } else {
       if (pollRef.current) {
@@ -77,7 +84,7 @@ export default function VideoPlayerModal({ video, onClose }: Props) {
         pollRef.current = null;
       }
     };
-  }, [isPlaying, isScrubbing, player, duration]);
+  }, [isPlaying, isScrubbing, player]);
 
   // Pause player when modal closes
   useEffect(() => {
@@ -130,7 +137,7 @@ export default function VideoPlayerModal({ video, onClose }: Props) {
           onPress={handleClose}
           hitSlop={16}
         >
-          <Text style={styles.closeText}>{"\u2715"}</Text>
+          <Ionicons name="close" size={22} color="#FFFFFF" />
         </Pressable>
 
         {/* Video area */}
@@ -149,8 +156,8 @@ export default function VideoPlayerModal({ video, onClose }: Props) {
 
         {/* Controls bar */}
         <View style={[styles.controlsBar, { paddingBottom: insets.bottom + 12 }]}>
-          <Pressable onPress={handlePlayPause} hitSlop={12}>
-            <Text style={styles.playButton}>{isPlaying ? "\u275A\u275A" : "\u25B6"}</Text>
+          <Pressable onPress={handlePlayPause} hitSlop={12} style={styles.playButton}>
+            <Ionicons name={isPlaying ? "pause" : "play"} size={22} color="#FF6B35" />
           </Pressable>
 
           <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
@@ -192,11 +199,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  closeText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "600",
-  },
   video: {
     flex: 1,
   },
@@ -217,10 +219,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#2C2C2E",
   },
   playButton: {
-    color: "#FF6B35",
-    fontSize: 18,
     width: 28,
-    textAlign: "center",
+    alignItems: "center",
+    justifyContent: "center",
   },
   slider: {
     flex: 1,
