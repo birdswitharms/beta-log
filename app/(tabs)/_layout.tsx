@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
+import { View, Text, Pressable, Modal, Linking, StyleSheet } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { usePreferencesStore } from "../../store/usePreferencesStore";
@@ -62,7 +62,16 @@ function SettingsModal({
             </Pressable>
           </View>
 
-          
+          <Text style={modalStyles.sectionLabel}>Support</Text>
+          <Pressable
+            style={modalStyles.coffeeButton}
+            onPress={() => Linking.openURL("https://buymeacoffee.com/segal.a")}
+          >
+            <Ionicons name="cafe-outline" size={20} color="#FF6B35" />
+            <Text style={modalStyles.coffeeButtonText}>Buy Me a Coffee</Text>
+          </Pressable>
+
+
             <>
               <Text style={modalStyles.sectionLabel}>Developer</Text>
               <Pressable
@@ -258,6 +267,21 @@ const modalStyles = StyleSheet.create({
   },
   clearButtonText: {
     color: "#FF453A",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  coffeeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginHorizontal: 20,
+    backgroundColor: "#2C2C2E",
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  coffeeButtonText: {
+    color: "#FF6B35",
     fontSize: 16,
     fontWeight: "600",
   },
