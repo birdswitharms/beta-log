@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { usePreferencesStore } from "../store/usePreferencesStore";
 import WelcomeScreen from "../components/WelcomeScreen";
 import CustomAlert from "../components/CustomAlert";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 export default function RootLayout() {
   const { loaded, onboardingComplete, load } = usePreferencesStore();
@@ -36,32 +37,34 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="workout/[id]"
-          options={{
-            headerShown: true,
-            headerStyle: { backgroundColor: "#1C1C1E" },
-            headerTintColor: "#FFFFFF",
-            headerTitleStyle: { fontWeight: "bold" },
-            title: "Workout",
-          }}
-        />
-        <Stack.Screen
-          name="camera"
-          options={{
+      <ErrorBoundary>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
             headerShown: false,
-            presentation: "fullScreenModal",
           }}
-        />
-      </Stack>
-      <CustomAlert />
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="workout/[id]"
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: "#1C1C1E" },
+              headerTintColor: "#FFFFFF",
+              headerTitleStyle: { fontWeight: "bold" },
+              title: "Workout",
+            }}
+          />
+          <Stack.Screen
+            name="camera"
+            options={{
+              headerShown: false,
+              presentation: "fullScreenModal",
+            }}
+          />
+        </Stack>
+        <CustomAlert />
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

@@ -75,23 +75,39 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
         key TEXT PRIMARY KEY,
         value TEXT
       );
+
+      CREATE TABLE IF NOT EXISTS schema_version (
+        version INTEGER PRIMARY KEY,
+        applied_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+      );
     `);
 
-    // Migrate existing tables that may lack new columns
-    const migrations = [
-      `ALTER TABLE exercises ADD COLUMN weight_lbs REAL`,
-      `ALTER TABLE timer_presets ADD COLUMN weight_lbs REAL`,
-      `ALTER TABLE timer_presets ADD COLUMN edge_mm REAL`,
-      `ALTER TABLE hangboarding ADD COLUMN weight_lbs REAL`,
-      `ALTER TABLE hangboarding ADD COLUMN edge_mm REAL`,
-      `ALTER TABLE exercises ADD COLUMN sets_data TEXT`,
+    // Versioned migrations — each runs at most once
+    const migrations: Array<{ version: number; sql: string }> = [
+      { version: 1, sql: `ALTER TABLE exercises ADD COLUMN weight_lbs REAL` },
+      { version: 2, sql: `ALTER TABLE timer_presets ADD COLUMN weight_lbs REAL` },
+      { version: 3, sql: `ALTER TABLE timer_presets ADD COLUMN edge_mm REAL` },
+      { version: 4, sql: `ALTER TABLE hangboarding ADD COLUMN weight_lbs REAL` },
+      { version: 5, sql: `ALTER TABLE hangboarding ADD COLUMN edge_mm REAL` },
+      { version: 6, sql: `ALTER TABLE exercises ADD COLUMN sets_data TEXT` },
     ];
-    for (const sql of migrations) {
+
+    const applied = await db.getFirstAsync<{ max_v: number | null }>(
+      `SELECT MAX(version) AS max_v FROM schema_version`
+    );
+    const currentVersion = applied?.max_v ?? 0;
+
+    for (const m of migrations) {
+      if (m.version <= currentVersion) continue;
       try {
-        await db.execAsync(sql);
+        await db.execAsync(m.sql);
       } catch {
-        // Column already exists — ignore
+        // Column already exists from before versioning — ignore
       }
+      await db.runAsync(
+        `INSERT INTO schema_version (version) VALUES (?)`,
+        [m.version]
+      );
     }
   }
   return db;

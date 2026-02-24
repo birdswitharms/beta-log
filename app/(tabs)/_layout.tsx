@@ -72,6 +72,7 @@ function SettingsModal({
           </Pressable>
 
 
+          {__DEV__ && (
             <>
               <Text style={modalStyles.sectionLabel}>Developer</Text>
               <Pressable
@@ -95,6 +96,7 @@ function SettingsModal({
                 <Text style={modalStyles.clearButtonText}>Clear Database</Text>
               </Pressable>
             </>
+          )}
         </View>
       </View>
     </Modal>
