@@ -9,6 +9,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LineChart } from "react-native-chart-kit";
 import { getHangboardingByPresetName } from "../db/database";
@@ -34,6 +35,7 @@ export default function HangboardingProgressModal({
   onClose,
   presetName,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const weightUnit = usePreferencesStore((s) => s.weightUnit);
   const [loading, setLoading] = useState(true);
   const [weightLabels, setWeightLabels] = useState<string[]>([]);
@@ -159,7 +161,7 @@ export default function HangboardingProgressModal({
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: Math.max(20, insets.bottom) }]}>
           <View style={styles.header}>
             <Text style={styles.title}>{presetName}</Text>
             <Pressable onPress={onClose} hitSlop={8}>
@@ -236,7 +238,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingBottom: 20,
     maxHeight: "95%",
   },
   header: {

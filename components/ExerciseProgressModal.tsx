@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LineChart } from "react-native-chart-kit";
 import { getExercisesByName } from "../db/database";
@@ -32,6 +33,7 @@ export default function ExerciseProgressModal({
   onClose,
   exerciseName,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const weightUnit = usePreferencesStore((s) => s.weightUnit);
   const [loading, setLoading] = useState(true);
   const [labels, setLabels] = useState<string[]>([]);
@@ -116,7 +118,7 @@ export default function ExerciseProgressModal({
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: Math.max(20, insets.bottom) }]}>
           <View style={styles.header}>
             <Text style={styles.title}>{exerciseName}</Text>
             <Pressable onPress={onClose} hitSlop={8}>
@@ -200,7 +202,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingBottom: 20,
   },
   header: {
     flexDirection: "row",
